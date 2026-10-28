@@ -117,8 +117,8 @@ identifiants dans Coolify.
   `DISCORD_TOKEN` ; facultatifs `DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`, `DISCORD_PVP_ROLE_ID`
   (prioritaires sur les noms), `BOT_MODE` (`journal` par défaut), `BOT_SUPPRIMER` (`oui` par défaut),
   `BOT_LOG`, `BOT_STATE` ; `DISCORD_PVP_CHANNEL_NAME` (`alertes-pvp`), `DISCORD_PVP_ROLE_NAME`
-  (`pvp-police`), `BOT_INSTALLER` (`oui` : le droit de créer ce qui manque) ; à venir avec T3 : produit
-  et langue des cartes de zone.
+  (`pvp-police`), `BOT_INSTALLER` (`oui` : le droit de créer ce qui manque) ; `BOT_CARTES` (`oui`),
+  `BOT_CARTES_PRODUIT` (`wowf`), `BOT_CARTES_LANGUE` (`frFR`).
 
 ## Renvois
 
@@ -136,7 +136,13 @@ identifiants dans Coolify.
   imposé le bot écoute tous les salons et ne retient que les lignes d'appel venues du jeu ; au démarrage
   il relit les salons qu'il peut relire (pas les autres) pour rattraper. 62 tests ; 5 règles cassées :
   attrapées. Jamais vu sur Discord.
-- **T3** — Cartes de zone à la demande (critère 5), après validation de A4.
+- **T3** — Cartes de zone à la demande (critère 5). FAIT le 2026-10-28 : `bot/map_store.py` (dernier
+  build par `/api/builds/{produit}/latest`, carte par `/api/map/{id}?…&explored=1`, cache dans
+  `BOT_STATE/cartes`, une requête par seconde, hors de la boucle du bot ; panne = pas d'image, nouvel
+  essai 10 min plus tard) ; essai réel : Strangleronce de Forever 70658 en français, 1002×668. 68 tests ;
+  4 règles cassées : attrapées.
+- **T3 bis** — Une carte par zone et le salon qui se vide (P10 à P13 de `alertes-pvp.md`, user
+  2026-10-28) : à coder avant la bascule.
 - **T4** — README complet et guide d'hébergement FR/EN (application Discord, lien d'invitation, Docker,
   Coolify).
 - **T5** — Bascule (A6), puis retrait du module PvP de CraftingOrderBot ; critères 7 et 8.

@@ -7,6 +7,7 @@ Le jeton du bot n'est jamais affiché ni journalisé : seule sa présence est v�
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,6 +23,9 @@ class Config:
     pvp_channel_name: str = "alertes-pvp"   # sinon : le salon des cartes, trouvé ou créé par ce nom (A1)
     pvp_role_name: str = "pvp-police"       # et le rôle, trouvé ou créé (mentionnable) par ce nom
     install: bool = True                  # BOT_INSTALLER : le droit de créer ce qui manque
+    maps: bool = True                     # BOT_CARTES : l'image de la zone sur la carte (wago.tools, A4)
+    maps_product: str = "wowf"            # BOT_CARTES_PRODUIT : wowf = Forever, wowt = PTR de Retail
+    maps_locale: str = "frFR"             # BOT_CARTES_LANGUE : la langue des noms sur l'image
     delete_relayed: bool = True           # BOT_SUPPRIMER : la ligne brute quitte le salon relié (P3)
     mode: str = "journal"                 # « journal » : note ce qui passe ; « repondre » : fait les cartes
     log_file: Path = ROOT / "bot.log"     # BOT_LOG
@@ -62,6 +66,13 @@ def _choice(values: dict[str, str], name: str, default: str, allowed: tuple[str,
     return value
 
 
+def _pattern(values: dict[str, str], name: str, default: str, regex: str) -> str:
+    value = values.get(name, "").strip() or default
+    if not re.fullmatch(regex, value):
+        raise SystemExit(f"{name} invalide dans .env : {value!r}.")
+    return value
+
+
 def load(path: Path = ROOT / ".env") -> Config:
     values = _read_env(path)
     values.update({k: v for k, v in os.environ.items() if k.startswith(("DISCORD_", "BOT_"))})
@@ -76,6 +87,9 @@ def load(path: Path = ROOT / ".env") -> Config:
                   pvp_channel_name=values.get("DISCORD_PVP_CHANNEL_NAME", "").strip() or "alertes-pvp",
                   pvp_role_name=values.get("DISCORD_PVP_ROLE_NAME", "").strip() or "pvp-police",
                   install=_choice(values, "BOT_INSTALLER", "oui", ("oui", "non")) == "oui",
+                  maps=_choice(values, "BOT_CARTES", "oui", ("oui", "non")) == "oui",
+                  maps_product=_pattern(values, "BOT_CARTES_PRODUIT", "wowf", r"[a-z0-9_]+"),
+                  maps_locale=_pattern(values, "BOT_CARTES_LANGUE", "frFR", r"[a-z]{2}[A-Z]{2}"),
                   delete_relayed=_choice(values, "BOT_SUPPRIMER", "oui", ("oui", "non")) == "oui",
                   mode=_choice(values, "BOT_MODE", "journal", ("journal", "repondre")),
                   log_file=Path(log) if log else ROOT / "bot.log",

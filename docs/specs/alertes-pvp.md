@@ -134,7 +134,7 @@ jeu. Le bot sait déjà lire le salon relié et y supprimer (commandes de COC, s
 - **P9** (agent, validée par le user le 2026-10-27) — **Pas de lien Wowhead** sur une carte d'appel : rien à lier (pas
   d'objet) ; la zone en clair suffit.
 
-## Phase 3 : une carte par zone, et le salon qui se vide (décidé le 2026-10-28, pas codé)
+## Phase 3 : une carte par zone, et le salon qui se vide (décidé et codé le 2026-10-28, jamais vu sur Discord)
 
 Demandé par le user le 2026-10-28 : « ne pas mettre deux fois la même carte dans le canal, et mettre un
 système pour nettoyer le canal ; si deux joueurs sont morts sur la même map, utiliser la même card ».

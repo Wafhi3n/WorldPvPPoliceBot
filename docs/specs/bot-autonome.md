@@ -118,7 +118,7 @@ identifiants dans Coolify.
   (prioritaires sur les noms), `BOT_MODE` (`journal` par défaut), `BOT_SUPPRIMER` (`oui` par défaut),
   `BOT_LOG`, `BOT_STATE` ; `DISCORD_PVP_CHANNEL_NAME` (`alertes-pvp`), `DISCORD_PVP_ROLE_NAME`
   (`pvp-police`), `BOT_INSTALLER` (`oui` : le droit de créer ce qui manque) ; `BOT_CARTES` (`oui`),
-  `BOT_CARTES_PRODUIT` (`wowf`), `BOT_CARTES_LANGUE` (`frFR`).
+  `BOT_CARTES_PRODUIT` (`wowf`), `BOT_CARTES_LANGUE` (`frFR`) ; `BOT_GARDER_HEURES` (`24`, 0 = jamais : P13).
 
 ## Renvois
 
@@ -142,7 +142,13 @@ identifiants dans Coolify.
   essai 10 min plus tard) ; essai réel : Strangleronce de Forever 70658 en français, 1002×668. 68 tests ;
   4 règles cassées : attrapées.
 - **T3 bis** — Une carte par zone et le salon qui se vide (P10 à P13 de `alertes-pvp.md`, user
-  2026-10-28) : à coder avant la bascule.
+  2026-10-28). FAIT le 2026-10-28 : `pvp_cards.py` (une carte = une zone, plusieurs appels ; verte quand
+  tous sont réglés, grise sinon), `pvp_embed.py` (un champ par appel, pied `m<zone> · Prénom#n …`, relu
+  après un redémarrage), `pvp_map.py` (un point par appelant, son prénom à côté), `pvp.py` (rejoindre la
+  carte en cours de la zone, une mention par carte, cartes relues à la 1re rencontre d'un serveur,
+  nettoyage toutes les heures, `BOT_GARDER_HEURES`). Trouvé en codant et corrigé : une carte restée
+  « en cours » pendant l'arrêt, au même appel qu'une plus récente, n'était jamais grisée ni effacée.
+  81 tests ; 7 règles cassées : attrapées. Rendu vérifié sur la vraie carte de Forever (deux prénoms).
 - **T4** — README complet et guide d'hébergement FR/EN (application Discord, lien d'invitation, Docker,
   Coolify).
 - **T5** — Bascule (A6), puis retrait du module PvP de CraftingOrderBot ; critères 7 et 8.

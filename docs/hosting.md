@@ -112,13 +112,16 @@ been tried). On Windows, in PowerShell:
 git clone <repository URL> WorldPvPPoliceBot
 cd WorldPvPPoliceBot
 python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env     # then type the token after DISCORD_TOKEN=
 .\.venv\Scripts\python.exe -m bot
 ```
 
-On Linux or macOS: `python3 -m venv .venv`, then `.venv/bin/python -m pip install -r requirements.txt`
-and `.venv/bin/python -m bot`. The bot runs as long as the window stays open; its log is `bot.log`, next
+On Linux or macOS: `python3 -m venv .venv`, then `.venv/bin/python -m pip install --upgrade pip`,
+`.venv/bin/python -m pip install -r requirements.txt` and `.venv/bin/python -m bot`. (A fresh
+environment can come with an old pip; an up-to-date one no longer trusts a certificate authority that
+was pulled in October 2026.) The bot runs as long as the window stays open; its log is `bot.log`, next
 to the code.
 
 ## 4. First run: look before it acts

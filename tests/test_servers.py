@@ -48,8 +48,8 @@ class TwoServers(unittest.TestCase):
             await relay.handle(line(OMW, a))
         asyncio.run(go())
         self.assertEqual((len(alerts_of(a).sent), len(alerts_of(b).sent)), (1, 1), "une carte par serveur")
-        self.assertEqual(alerts_of(a).sent[0].card.en_route, ["Gnomette"], "le « j'arrive » de A va à la carte de A")
-        self.assertEqual(alerts_of(b).sent[0].card.en_route, [], "jamais à celle de B")
+        self.assertEqual(alerts_of(a).sent[0].call.en_route, ["Gnomette"], "le « j'arrive » de A va à la carte de A")
+        self.assertEqual(alerts_of(b).sent[0].call.en_route, [], "jamais à celle de B")
         self.assertEqual((a.created.count(("salon", "alertes-pvp")), b.created.count(("salon", "alertes-pvp"))), (1, 1),
                          "chaque serveur s'installe une fois")
 

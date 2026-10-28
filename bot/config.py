@@ -27,6 +27,7 @@ class Config:
     maps_product: str = "wowf"            # BOT_CARTES_PRODUIT : wowf = Forever, wowt = PTR de Retail
     maps_locale: str = "frFR"             # BOT_CARTES_LANGUE : la langue des noms sur l'image
     delete_relayed: bool = True           # BOT_SUPPRIMER : la ligne brute quitte le salon relié (P3)
+    keep_hours: int = 24                  # BOT_GARDER_HEURES : une carte finie est effacée après (0 : jamais, P13)
     mode: str = "journal"                 # « journal » : note ce qui passe ; « repondre » : fait les cartes
     log_file: Path = ROOT / "bot.log"     # BOT_LOG
     state_dir: Path = ROOT / "state"      # BOT_STATE : cache des cartes de zone (un volume en conteneur)
@@ -35,6 +36,7 @@ class Config:
         return (f"Config(channel_id={self.channel_id}, pvp_channel_id={self.pvp_channel_id}, "
                 f"pvp_role_id={self.pvp_role_id}, pvp_channel_name={self.pvp_channel_name!r}, "
                 f"pvp_role_name={self.pvp_role_name!r}, install={self.install}, delete_relayed={self.delete_relayed}, "
+                f"keep_hours={self.keep_hours}, "
                 f"mode={self.mode!r}, log_file={str(self.log_file)!r}, state_dir={str(self.state_dir)!r})")
 
 
@@ -91,6 +93,7 @@ def load(path: Path = ROOT / ".env") -> Config:
                   maps_product=_pattern(values, "BOT_CARTES_PRODUIT", "wowf", r"[a-z0-9_]+"),
                   maps_locale=_pattern(values, "BOT_CARTES_LANGUE", "frFR", r"[a-z]{2}[A-Z]{2}"),
                   delete_relayed=_choice(values, "BOT_SUPPRIMER", "oui", ("oui", "non")) == "oui",
+                  keep_hours=int(_pattern(values, "BOT_GARDER_HEURES", "24", r"\d{1,4}")),
                   mode=_choice(values, "BOT_MODE", "journal", ("journal", "repondre")),
                   log_file=Path(log) if log else ROOT / "bot.log",
                   state_dir=Path(state) if state else ROOT / "state")

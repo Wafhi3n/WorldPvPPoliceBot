@@ -40,7 +40,7 @@ class CatchUp(unittest.TestCase):
         relay, _ = make(channel, source=Source([omw, old, sos, chat]))
         self.assertEqual(asyncio.run(relay.catch_up()), 2)
         self.assertEqual(len(channel.sent), 1, "une seule carte, celle de l'appel raté")
-        card = channel.sent[0].card
+        card = channel.sent[0].call
         self.assertEqual((card.en_route, card.updated_at), (["Gnomette"], T0 - 600),
                          "dans l'ordre, et à l'heure de la ligne (pas du redémarrage)")
         self.assertTrue(sos.deleted and omw.deleted, "les lignes reprises quittent le salon relié")
@@ -71,7 +71,7 @@ class DiscordTime(unittest.TestCase):
         relay, clock = make(channel)
         discord_now = dt.datetime.fromtimestamp(T0 + 114, tz=dt.timezone.utc)   # le serveur retarde de 114 s
         asyncio.run(relay.handle(Raw(SOS1, created_at=discord_now)))
-        card = channel.sent[0].card
+        card = channel.sent[0].call
         self.assertEqual(card.updated_at, T0 + 114, "la carte est datée de l'heure de Discord")
         self.assertEqual(relay.offset, 114.0, "l'écart est appris")
         clock["now"] += 60

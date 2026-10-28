@@ -4,13 +4,15 @@ brute gardée si la carte n'est pas faite ; les cartes retrouvées après un red
 ligne SOS ; deux lignes qui se croisent ne font jamais deux cartes."""
 
 import asyncio
+import datetime as dt
 import unittest
 from types import SimpleNamespace
 
 import discord
 
 from bot.pvp import PvpRelay
-from bot.pvp_cards import ACTIVE, EXPIRED, EXPIRY, SETTLED, Card, from_embed, to_embed
+from bot.pvp_cards import ACTIVE, EXPIRED, EXPIRY, SETTLED, Call, Card
+from bot.pvp_embed import from_embed, to_embed
 
 WOW_APP = 1384671873593512078
 BOT = SimpleNamespace(id=1)
@@ -36,20 +38,35 @@ class Raw:
 
 
 class Posted:
-    """Un message du bot dans #alertes-pvp."""
-    def __init__(self, content, embed, mentions, files=()):
-        self.author, self.content, self.embeds, self.mentions, self.edits = BOT, content, [embed], mentions, []
-        self.files = list(files)
+    """Un message du bot dans #alertes-pvp (heures de Discord facultatives : créé, dernière modification)."""
+    def __init__(self, content, embed, mentions, files=(), created_at=None, author=BOT):
+        self.author, self.content, self.embeds, self.mentions, self.edits = author, content, [embed], mentions, []
+        self.files, self.created_at, self.edited_at, self.deleted = list(files), created_at, None, False
+        self.id = id(self)
 
     async def edit(self, embed=None, attachments=None, allowed_mentions=None):
         self.embeds = [embed]
         self.edits.append(allowed_mentions)
+        self.edited_at = dt.datetime.now(dt.timezone.utc)   # comme Discord : l'heure de la modification
         if attachments is not None:
             self.files = list(attachments)
+
+    async def delete(self):
+        self.deleted = True
 
     @property
     def card(self):
         return from_embed(self.embeds[0])
+
+    @property
+    def call(self):
+        """Le 1er appel de la carte (une carte d'un seul appel, le cas le plus courant)."""
+        return self.card.calls[0]
+
+
+def card_of(caller, n, updated_at, status=ACTIVE, map_id=1429):
+    """Une carte d'un appel, telle qu'une carte relue."""
+    return Card(map_id, "Forêt d'Elwynn", [Call(caller, n, map=map_id, status=status, updated_at=updated_at)])
 
 
 class Channel:
@@ -105,14 +122,14 @@ class OneCard(unittest.TestCase):
         card = channel.sent[0]
         self.assertEqual(len(card.edits), 3, "éditée trois fois")
         final = card.card
-        self.assertEqual((final.deaths, final.en_route, final.status), (3, ["Gnomette"], SETTLED))
+        self.assertEqual((final.calls[0].deaths, final.calls[0].en_route, final.status), (3, ["Gnomette"], SETTLED))
         self.assertTrue(all(r.deleted for r in raws), "les lignes brutes quittent le salon relié (P3)")
 
     def test_omw_en_double(self):
         channel = Channel()
         relay, _ = make(channel)
         run(relay, SOS1, OMW, OMW)
-        self.assertEqual(channel.sent[0].card.en_route, ["Gnomette"])
+        self.assertEqual(channel.sent[0].call.en_route, ["Gnomette"])
 
 
 class Mentions(unittest.TestCase):
@@ -173,14 +190,14 @@ class Restart(unittest.TestCase):
         second, _ = make(channel, role=555)        # le bot redémarre : plus rien en mémoire
         run(second, SOS3, OMW)
         self.assertEqual(len(channel.sent), 1, "pas de 2e carte ni de 2e mention")
-        final = channel.sent[0].card
+        final = channel.sent[0].call
         self.assertEqual((final.deaths, final.en_route), (3, ["Gnomette"]))
 
     def test_reprise_au_demarrage(self):
         channel = Channel()
-        old, recent, done = (Posted(None, to_embed(Card("Vieux", 1, updated_at=100000.0 - EXPIRY - 5)), None),
-                             Posted(None, to_embed(Card("Neuf", 2, updated_at=100000.0 - 60)), None),
-                             Posted(None, to_embed(Card("Fini", 3, status=SETTLED, updated_at=0.0)), None))
+        old, recent, done = (Posted(None, to_embed(card_of("Vieux", 1, 100000.0 - EXPIRY - 5, map_id=10)), None),
+                             Posted(None, to_embed(card_of("Neuf", 2, 100000.0 - 60, map_id=11)), None),
+                             Posted(None, to_embed(card_of("Fini", 3, 0.0, status=SETTLED, map_id=12)), None))
         channel.older = [recent, old, done]
         relay, _ = make(channel)
         asyncio.run(relay.start())
@@ -227,7 +244,7 @@ class Time(unittest.TestCase):
             await asyncio.gather(relay.handle(Raw(SOS1)), relay.handle(Raw(SOS3)))
         asyncio.run(go())
         self.assertEqual(len(channel.sent), 1, "jamais deux cartes pour un appel")
-        self.assertEqual(channel.sent[0].card.deaths, 3)
+        self.assertEqual(channel.sent[0].call.deaths, 3)
 
 
 if __name__ == "__main__":

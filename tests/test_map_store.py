@@ -97,8 +97,8 @@ class OnTheCard(unittest.TestCase):
             relay, _ = make(channel, maps=store(d, FakeWago(), Clock()))
             asyncio.run(relay.handle(Raw(SOS1)))
         posted = channel.sent[0]
-        self.assertEqual([f.filename for f in posted.files], ["sos-m1429-421-653.jpg"])
-        self.assertEqual(posted.embeds[0].image.url, "attachment://sos-m1429-421-653.jpg")
+        self.assertEqual([f.filename for f in posted.files], ["sos-m1429.jpg"])
+        self.assertEqual(posted.embeds[0].image.url, "attachment://sos-m1429.jpg")
 
     def test_zone_seule_rien_n_est_telecharge(self):
         with tempfile.TemporaryDirectory() as d:

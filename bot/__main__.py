@@ -27,6 +27,12 @@ PERMISSIONS = discord.Permissions(view_channel=True, send_messages=True, embed_l
                                   manage_roles=True)
 
 
+def invite_link(application_id: int) -> str:
+    """Le lien d'invitation : la portée `bot` seule (aucune commande slash) et les droits ci-dessus. Le guide
+    d'hébergement (docs/hebergement.md, docs/hosting.md) en recopie l'entier des droits."""
+    return discord.utils.oauth_url(application_id, permissions=PERMISSIONS, scopes=("bot",))
+
+
 def setup_logging(log_file) -> logging.Logger:
     """Journal dans `log_file` (BOT_LOG) ET sur la sortie standard (`docker logs` en conteneur)."""
     log = logging.getLogger("bot")
@@ -53,7 +59,7 @@ def diagnose(client: discord.Client, channel_id: int, log: logging.Logger) -> No
         servers = ", ".join(f"{g.name} ({g.id})" for g in client.guilds) or "aucun"
         log.warning("salon %s INTROUVABLE pour le bot (pas invité, ou pas le droit de le voir) ; serveurs : %s",
                     channel_id, servers)
-        log.warning("lien d'invitation du bot : %s", discord.utils.oauth_url(client.application_id, permissions=PERMISSIONS))
+        log.warning("lien d'invitation du bot : %s", invite_link(client.application_id))
         return
     perms = channel.permissions_for(channel.guild.me)
     log.info("salon #%s sur %s : voir=%s lire_historique=%s envoyer=%s liens=%s fichiers=%s gerer_messages=%s",
@@ -78,7 +84,7 @@ def main() -> None:
         log.info("connecté : %s ; mode %s ; serveurs : %s", client.user, conf.mode, servers)
         log.info("cartes de zone : %s", f"wago.tools, {conf.maps_product}, {conf.maps_locale}, {len(maps)} en cache"
                  if conf.maps else "éteintes (BOT_CARTES=non)")
-        log.info("lien d'invitation du bot : %s", discord.utils.oauth_url(client.application_id, permissions=PERMISSIONS))
+        log.info("lien d'invitation du bot : %s", invite_link(client.application_id))
         for channel_id in (conf.channel_id, conf.pvp_channel_id):
             if channel_id:
                 diagnose(client, channel_id, log)

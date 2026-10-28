@@ -1,0 +1,14 @@
+# Rien de secret ni de local n'entre dans l'image.
+.env
+.deploy.env
+.venv/
+.git/
+__pycache__/
+*.pyc
+bot.log
+state/
+.cache/
+data/
+tests/
+tools/
+docs/

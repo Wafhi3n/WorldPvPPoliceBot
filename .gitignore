@@ -1,0 +1,13 @@
+# Secrets et environnement local : jamais versionnés
+.env
+.deploy.env
+.venv/
+__pycache__/
+*.pyc
+bot.log
+# État du bot (journal, cache des cartes de zone) : un volume en conteneur
+state/
+.cache/
+# Images du jeu : jamais dans ce dépôt (public au lancement ; images de Blizzard)
+data/maps/*.webp
+data/maps/*.png

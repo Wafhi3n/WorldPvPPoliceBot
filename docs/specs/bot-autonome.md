@@ -1,0 +1,135 @@
+# Un bot PvP autonome, que chaque guilde peut héberger
+
+> État : **brouillon** (2026-10-28) · Demande du user, mise en forme par l'agent · Décisions D1 à D6 du
+> user (2026-10-28) ; A1 à A6 proposées par l'agent, **à valider**. La spec des cartes elles-mêmes
+> (lecture des lignes, carte, mise à jour, mention, effacement, rattrapage) reste
+> `docs/specs/alertes-pvp.md`, venue de CraftingOrderBot avec le code.
+
+## Le problème
+
+Les cartes d'appel de World PvP Police vivent aujourd'hui dans CraftingOrderBot, le bot privé des
+commandes de Crafting Order (COC), avec ses données et ses réglages propres à une guilde. Une autre
+guilde qui voudrait l'addon et ses cartes Discord ne peut rien en faire : il faudrait lui donner tout le
+bot des commandes. Et au lancement, le user doit encore créer `#alertes-pvp`, le rôle et recopier trois
+identifiants dans Coolify.
+
+## Ce qu'on veut
+
+- **Un bot à part**, World PvP Police Bot, dans son propre dépôt, que n'importe quelle guilde peut
+  héberger (Docker, Coolify, ou un PC), avec un guide en français et en anglais.
+- **Le moins de réglages possible** : un jeton, un lien d'invitation que le bot écrit lui-même ; il
+  trouve ou crée sur le serveur ce dont il a besoin (`#alertes-pvp`, le rôle à mentionner, ses droits).
+- **Plusieurs serveurs** si on l'invite sur plusieurs : chaque serveur a ses cartes dans son propre
+  `#alertes-pvp`.
+- **Les cartes de zone** téléchargées à la demande sur wago.tools (jamais d'image du jeu dans le dépôt).
+- **Le bot des commandes** ne garde que les commandes de COC.
+
+## Ce qu'on NE fait PAS
+
+- **Pas d'instance publique** partagée par tout le monde : le contenu des messages est un « intent »
+  privilégié de Discord ; au-delà de 100 serveurs, il faudrait la vérification de Discord. Chaque guilde
+  héberge son bot (D2) ; plusieurs serveurs par bot restent possibles en dessous de cette limite.
+- **Pas de bouton pour prendre le rôle** : les membres passent par « Salons et rôles » de la
+  communauté Discord (D6).
+- **Pas d'image de Blizzard dans le dépôt**, ni dans l'image Docker (D5).
+- **Pas de commandes de COC** dans ce bot.
+
+## Cas particuliers
+
+- **Deux modules PvP sur le même salon relié** (pendant la bascule) : chaque appel ferait deux cartes et
+  deux mentions. Interdit par l'ordre de la bascule (A6).
+- **Le bot n'a pas le droit de créer un salon ou un rôle** : il le dit dans son journal, avec le lien
+  d'invitation qui donne les bons droits, et continue sans cartes sur ce serveur.
+- **Un rôle `pvp-police` au-dessus du rôle du bot** : Discord lui interdit d'y toucher (le rendre
+  mentionnable) ; il le dit. S'il le crée lui-même, il est en dessous.
+- **Le salon relié n'a reçu aucune ligne du jeu depuis longtemps** : rien à découvrir au démarrage ;
+  il est reconnu à la première ligne du jeu qui arrive (A2).
+- **wago.tools injoignable** : la carte part sans image ; nouvel essai à l'appel suivant (A4).
+
+## Décisions
+
+- **D1** (user, 2026-10-28, « il faudrait peut-être dissocier le bot PvP du bot de commande au cas où
+  on veut partager ») — **Deux bots** : World PvP Police Bot pour les appels, CraftingOrderBot pour les
+  commandes. Revoit **P5** de `alertes-pvp.md` (un seul bot) : la crainte de P5 (deux bots qui se
+  marchent dessus dans le salon relié) ne tient pas, chacun ne lit et n'efface que SES lignes (le lecteur
+  PvP refuse les `WTB … #CO<n>`, le lecteur de commandes ignore les `SOS`/`OMW`/`END` : testé des deux
+  côtés).
+- **D2** (user, 2026-10-28, « il faut que les gens puissent héberger leur propre bot ») — **Chaque
+  guilde héberge le sien.**
+- **D3** (user, 2026-10-28) — Nom **WorldPvPPoliceBot** ; licence **MIT**.
+- **D4** (user, 2026-10-28) — Dépôt GitHub **privé**, rendu public **avec l'addon, au lancement** (après
+  l'avoir vu sur Forever) ; README et guide **en français et en anglais**.
+- **D5** (agent, découle de D4) — Aucune image du jeu versionnée : cartes de zone à la demande.
+- **D6** (user, 2026-10-28) — Le rôle se prend par « Salons et rôles » de la communauté Discord ; le bot
+  le crée (mentionnable), il ne le distribue pas.
+- **A1** (agent, à valider) — **Le bot crée ce qui manque**, sur le serveur du salon relié, au
+  démarrage : `#alertes-pvp` (nom réglable), en lecture seule pour les membres (ils lisent et
+  réagissent, seul le bot écrit) ; le rôle `pvp-police` (nom réglable), mentionnable. Un identifiant
+  mis dans la configuration reste prioritaire sur le nom.
+- **A2** (agent, à valider) — **Le salon relié se reconnaît tout seul** : seuls les salons reliés au jeu
+  reçoivent des messages du jeu (`is_from_game`). Au démarrage, le bot relit les derniers messages des
+  salons qu'il peut lire (borné) pour retrouver le salon relié de chaque serveur, puis rattrape les
+  lignes ratées ; en direct, une ligne d'appel venue du jeu dans un salon le désigne. `DISCORD_CHANNEL_ID`
+  reste possible pour forcer un salon. Raison : sur Coolify, `/app/state` n'est pas un volume
+  persistant (mesuré le 2026-10-10) ; rien de vital ne doit dépendre d'un fichier.
+- **A3** (agent, à valider) — **Les droits** : le bot écrit dans son journal son lien d'invitation avec
+  exactement voir, écrire, intégrer des liens, **joindre des fichiers** (l'image de la carte), lire
+  l'historique, gérer les messages (effacer la ligne brute), gérer les salons et gérer les rôles (A1).
+- **A4** (agent, à valider) — **Cartes de zone à la demande** : à la première ligne d'une zone, le bot
+  télécharge `/api/map/{uiMapID}?version=<dernier build>&locale=<langue>&explored=1` sur wago.tools
+  (dernier build du produit par `/api/builds/{produit}/latest`, produit `wowf` par défaut, `wowt` pour le
+  PTR de Retail ; langue `frFR` par défaut), une requête par seconde au plus, dans son cache (`BOT_STATE`).
+- **A5** (agent, à valider) — **Langue des cartes Discord** : le français d'aujourd'hui ; les libellés
+  de la carte passent dans une table de traduction (anglais en plus) choisie par une variable.
+- **A6** (agent, à valider) — **L'ordre de la bascule** depuis CraftingOrderBot :
+  1. le nouveau bot tourne en `BOT_MODE=journal` (il regarde, ne fait rien) ;
+  2. dans UNE même fenêtre de redéploiement, le user vide `DISCORD_PVP_CHANNEL_ID` de CraftingOrderBot
+     (son module PvP s'éteint : critère 5 de `alertes-pvp.md`) et passe le nouveau en `repondre` ;
+  3. ensuite seulement, le module PvP est retiré du code de CraftingOrderBot (en gardant le test qui
+     prouve qu'il ignore une ligne `SOS`).
+
+## Critères d'acceptation
+
+1. [test] Les modules repris de CraftingOrderBot gardent leurs tests verts (critères 1 à 6, 9 de
+   `alertes-pvp.md`) dans ce dépôt, sans rien importer du bot des commandes.
+2. [test] Sur un faux serveur sans `#alertes-pvp` ni rôle, le bot les crée : le salon en lecture seule
+   pour `@everyone`, écriture et fichiers pour lui ; le rôle mentionnable ; un identifiant configuré
+   empêche toute création ; sans le droit, rien n'est créé et le journal le dit.
+3. [test] Deux faux serveurs : une ligne d'appel du salon relié de l'un fait sa carte dans le
+   `#alertes-pvp` de l'un, jamais de l'autre.
+4. [test] Le salon relié est retrouvé au démarrage par ses messages du jeu, puis ses lignes ratées
+   rattrapées ; un salon sans message du jeu n'est jamais pris pour le salon relié.
+5. [test] La carte de zone se télécharge une fois (cache), au dernier build du produit ; wago.tools en
+   panne = carte sans image, sans erreur.
+6. [check] Aucune image (`.webp`, `.png`) versionnée ; l'image Docker ne copie que `bot/`.
+7. [human] Sur le serveur de test du user : le bot invité par son lien, sans aucun identifiant dans sa
+   configuration hors le jeton, crée `#alertes-pvp` et `pvp-police`, et un appel en jeu y fait sa carte
+   avec l'image de la zone. Témoin : la carte du bot des commandes d'avant la bascule.
+8. [human] Après la bascule : un appel = UNE carte, UNE mention ; une commande de COC suit son chemin
+   habituel dans `#commandes`.
+
+## Contrat
+
+- **Entrée** : le format de ligne de la spec de l'addon (`SOS`, `OMW`, `END`), inchangé
+  (`docs/specs/alertes-pvp.md`, « Contrat »).
+- **Configuration** (variables d'environnement, mêmes noms que l'ancien module pour la bascule) :
+  `DISCORD_TOKEN` ; facultatifs `DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`, `DISCORD_PVP_ROLE_ID`
+  (prioritaires sur les noms), `BOT_MODE` (`journal` par défaut), `BOT_SUPPRIMER` (`oui` par défaut),
+  `BOT_LOG`, `BOT_STATE` ; à venir avec T2-T3 : noms du salon et du rôle, produit et langue des cartes.
+
+## Renvois
+
+- `docs/specs/alertes-pvp.md` : les cartes (P1-P9 ; P5 revue par D1).
+- Addon : `WorldPvPPolice/docs/specs/appel-a-l-aide.md` (format de ligne, D11 à 30 minutes).
+- wago.tools : `https://wago.tools/apis` (`/api/map`, `/api/builds/{produit}/latest`).
+
+## Plan (2026-10-28) — volatile, meurt quand c'est fait
+
+- **T1** — Dépôt, modules repris (`bot/pvp*.py`, `bot/game.py`), config et point d'entrée à un seul
+  serveur, comme aujourd'hui ; tests verts (critère 1). FAIT le 2026-10-28 (53 tests).
+- **T2** — Plusieurs serveurs, salon relié reconnu, installation par nom (critères 2 à 4), après
+  validation de A1 à A3.
+- **T3** — Cartes de zone à la demande (critère 5), après validation de A4.
+- **T4** — README complet et guide d'hébergement FR/EN (application Discord, lien d'invitation, Docker,
+  Coolify).
+- **T5** — Bascule (A6), puis retrait du module PvP de CraftingOrderBot ; critères 7 et 8.

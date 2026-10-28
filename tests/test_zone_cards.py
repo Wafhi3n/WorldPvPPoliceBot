@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 from bot.pvp_cards import ACTIVE, EXPIRED, EXPIRY, SETTLED, Call, Card
 from bot.pvp_embed import to_embed
-from tests.test_pvp_relay import BOT, Channel, Posted, Raw, make
+from tests.test_pvp_relay import BOT, Channel, Posted, Raw, card_of, make
 
 GNOMI = "SOS Gnomi Forêt d'Elwynn (42.1, 65.3) #SOS7 m1429 d1 kXyz cROGUE : 3 voleurs au pont"
 BOB = "SOS Bob Forêt d'Elwynn (50.0, 40.0) #SOS2 m1429 d1 kXyz cROGUE : ils sont 4"
@@ -104,6 +104,18 @@ class Restart(unittest.TestCase):
         card = channel.sent[0].card
         self.assertEqual([c.caller for c in card.calls], ["Gnomi", "Bob", "Zed"])
         self.assertEqual(card.calls[1].en_route, ["Gnomette"], "le « j'arrive » trouve Bob sur la carte relue")
+
+    def test_la_carte_d_un_autre_bot_jamais_rejointe(self):
+        # La bascule (A6) : le #alertes-pvp d'Ost Ardent porte les cartes de CraftingOrderBot, au même format.
+        # Rejointe, elle ne pourrait pas être modifiée (403) et l'appel resterait sans carte.
+        stranger = Posted(None, to_embed(card_of("Bob", 2, updated_at=100000.0 - 60)), None,
+                          author=SimpleNamespace(id=42))
+        channel = Channel()
+        channel.older = [stranger]
+        relay, _ = make(channel)
+        run(relay, GNOMI)
+        self.assertEqual((len(channel.sent), stranger.edits), (1, []),
+                         "la carte en cours d'un autre bot, même zone : une carte neuve, l'autre intouchée")
 
 
 def finished(hours_ago, status=SETTLED, author=BOT, map_id=1429):

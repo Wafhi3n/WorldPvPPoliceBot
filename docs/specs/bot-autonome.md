@@ -162,4 +162,6 @@ identifiants dans Coolify.
   le dit). Une table de traduction et sa variable, AVANT de rendre le dépôt public.
 - **T5** — Bascule (A6), puis retrait du module PvP de CraftingOrderBot ; critères 7 et 8. Avant la
   bascule : relire les permissions du NOUVEAU bot dans le `#alertes-pvp` existant (il le retrouve par
-  son nom et ne règle pas ses permissions : envoyer, intégrer des liens, joindre des fichiers).
+  son nom et ne règle pas ses permissions : envoyer, intégrer des liens, joindre des fichiers). Les cartes
+  de CraftingOrderBot déjà dans ce salon ne sont ni relues ni rejointes (le bot ne lit que les siennes ;
+  `test_la_carte_d_un_autre_bot_jamais_rejointe`).

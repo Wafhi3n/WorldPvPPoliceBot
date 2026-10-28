@@ -149,7 +149,8 @@ installation sur Votre serveur : #alertes-pvp créé (lecture seule pour les mem
 installation sur Votre serveur : rôle pvp-police créé (mentionnable)
 ```
 
-Le prochain appel fait sa carte.
+Le prochain appel fait sa carte. L'appel d'essai aussi, s'il a moins de 30 minutes : au démarrage, le
+bot rattrape les lignes d'appel restées dans le salon relié, mention du rôle comprise.
 
 ## 5. Laisser les membres prendre le rôle
 
@@ -170,7 +171,10 @@ la liste des salons. Sur un serveur qui n'est pas communautaire, un modérateur 
 - La ligne brute est effacée du salon relié une fois la carte faite (`BOT_SUPPRIMER`).
 - Une carte finie est effacée de `#alertes-pvp` 24 heures plus tard (`BOT_GARDER_HEURES`). Le bot ne
   touche jamais aux autres messages du salon.
-- Après un arrêt, il reprend ses cartes en cours et rattrape les lignes arrivées entre-temps.
+- Après un arrêt, il reprend ses cartes en cours et rattrape les lignes arrivées entre-temps (celles
+  des 30 dernières minutes).
+- Il ne lit et ne modifie que ses propres cartes : celles d'un autre bot dans le même salon restent
+  telles quelles.
 - Un même bot peut servir plusieurs serveurs : chacun a son `#alertes-pvp`.
 - Les cartes sont en français. Une version anglaise est prévue.
 

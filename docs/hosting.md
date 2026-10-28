@@ -149,7 +149,8 @@ installation sur Your server : #alertes-pvp créé (lecture seule pour les membr
 installation sur Your server : rôle pvp-police créé (mentionnable)
 ```
 
-The next call gets its card.
+The next call gets its card. So does the test call, if it's less than 30 minutes old: on start, the bot
+catches up on the call lines still sitting in the linked channel, role ping included.
 
 ## 5. Let members take the role
 
@@ -170,7 +171,9 @@ server that isn't a Community server, a moderator hands out the role.
 - The raw line is deleted from the linked channel once the card is made (`BOT_SUPPRIMER`).
 - A finished card is deleted from `#alertes-pvp` 24 hours later (`BOT_GARDER_HEURES`). The bot never
   touches other messages in that channel.
-- After a stop, it picks its open cards back up and catches up on the lines that came in meanwhile.
+- After a stop, it picks its open cards back up and catches up on the lines that came in meanwhile
+  (those from the last 30 minutes).
+- It only reads and edits its own cards: another bot's cards in the same channel are left alone.
 - One bot can serve several servers: each gets its own `#alertes-pvp`.
 - **The cards are in French for now.** An English version is planned. The settings keep their French
   values (`oui` / `non` = yes / no, `journal`, `repondre`).

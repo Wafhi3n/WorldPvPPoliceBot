@@ -64,10 +64,18 @@ class PvpRelay:
             self.offset = at - self.clock()
         return at
 
-    def _art(self, card: Card) -> tuple[discord.Embed, list]:
+    async def _map_file(self, map_id):
+        """L'image de la zone : un index (uiMapID → fichier) ou un magasin qui télécharge à la demande
+        (map_store.MapStore, A4)."""
+        if hasattr(self.maps, "path"):
+            return await self.maps.path(map_id)
+        return self.maps.get(map_id)
+
+    async def _art(self, card: Card) -> tuple[discord.Embed, list]:
         """L'embed de la carte et ses pièces jointes : l'image de la zone avec le point, redessinée à
         chaque envoi (le point a pu bouger) ; aucune pièce jointe sans image (zone seule, carte inconnue)."""
-        art = render(self.maps, card.map, card.x, card.y)
+        path = await self._map_file(card.map) if card.x is not None and card.y is not None else None
+        art = render({card.map: path}, card.map, card.x, card.y) if path is not None else None
         if art is None:
             return to_embed(card), []
         data, name = art
@@ -158,7 +166,7 @@ class PvpRelay:
         role = server.role_id
         mentions = (discord.AllowedMentions(everyone=False, users=False, roles=[discord.Object(id=role)])
                     if role else discord.AllowedMentions.none())
-        embed, files = self._art(card)
+        embed, files = await self._art(card)
         try:
             card.message = await server.alerts.send(content=f"<@&{role}>" if role else None, embed=embed,
                                                     files=files, allowed_mentions=mentions)
@@ -173,7 +181,7 @@ class PvpRelay:
     async def _edit(self, card: Card) -> bool:
         # `attachments` remplace celles de la carte : la nouvelle image, ou aucune (sinon une vieille image
         # resterait affichée sous la carte, détachée de l'embed).
-        embed, files = self._art(card)
+        embed, files = await self._art(card)
         try:
             await card.message.edit(embed=embed, attachments=files, allowed_mentions=discord.AllowedMentions.none())
         except discord.DiscordException as err:

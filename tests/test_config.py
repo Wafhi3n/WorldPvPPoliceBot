@@ -25,6 +25,15 @@ class Load(unittest.TestCase):
         self.assertEqual((c.mode, c.delete_relayed), ("journal", True), "1er lancement : on regarde ; P3 : on efface")
         self.assertEqual(c.state_dir, cfg.ROOT / "state")
 
+    def test_les_cartes_de_zone(self):
+        c = self.load(BASE)
+        self.assertEqual((c.maps, c.maps_product, c.maps_locale), (True, "wowf", "frFR"), "Forever, en français")
+        c = self.load({**BASE, "BOT_CARTES_PRODUIT": "wowt", "BOT_CARTES_LANGUE": "enUS", "BOT_CARTES": "non"})
+        self.assertEqual((c.maps, c.maps_product, c.maps_locale), (False, "wowt", "enUS"))
+        for bad in ({"BOT_CARTES_LANGUE": "fr"}, {"BOT_CARTES_PRODUIT": "wow f"}):
+            with self.subTest(bad=bad), self.assertRaises(SystemExit):
+                self.load({**BASE, **bad})
+
     def test_les_noms(self):
         c = self.load({**BASE, "DISCORD_PVP_CHANNEL_NAME": "sos", "DISCORD_PVP_ROLE_NAME": "Police",
                        "BOT_INSTALLER": "non"})

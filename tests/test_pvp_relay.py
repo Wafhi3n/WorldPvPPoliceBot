@@ -84,7 +84,7 @@ def make(channel, role=None, delete=True, pvp=True, maps=None, source=None):
     conf = SimpleNamespace(pvp_channel_id=77 if pvp else None, pvp_role_id=role, delete_relayed=delete,
                            channel_id=66)
     clock = {"now": 100000.0}
-    return PvpRelay(client, conf, log, clock=lambda: clock["now"], sleep=never, maps=maps or {}), clock
+    return PvpRelay(client, conf, log, clock=lambda: clock["now"], sleep=never, maps={} if maps is None else maps), clock
 
 
 def run(relay, *contents):

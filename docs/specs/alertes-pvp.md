@@ -134,6 +134,49 @@ jeu. Le bot sait déjà lire le salon relié et y supprimer (commandes de COC, s
 - **P9** (agent, validée par le user le 2026-10-27) — **Pas de lien Wowhead** sur une carte d'appel : rien à lier (pas
   d'objet) ; la zone en clair suffit.
 
+## Phase 3 : une carte par zone, et le salon qui se vide (décidé le 2026-10-28, pas codé)
+
+Demandé par le user le 2026-10-28 : « ne pas mettre deux fois la même carte dans le canal, et mettre un
+système pour nettoyer le canal ; si deux joueurs sont morts sur la même map, utiliser la même card ».
+Raison donnée : « le but c'est que la guilde joue ensemble, donc deux personnes qui font un appel à
+l'aide doivent être reliées ».
+
+- **P10** (user) — **Une carte par ZONE en cours** : un appel dont la zone (`m<uiMapID>`) a déjà une
+  carte en cours sur ce serveur rejoint cette carte, au lieu d'en ouvrir une autre. « En cours » = au
+  moins un de ses appels l'est encore (30 minutes, D11 de l'addon). Pas de critère de distance : même
+  zone suffit (choix du user).
+- **P11** (user) — **Une seule mention du rôle par carte** : le 1er appel d'une zone mentionne le rôle ;
+  un 2e appelant qui rejoint la carte la met à jour sans nouvelle notification.
+- **P12** (user) — **Jamais deux fois la même carte dans le salon** : un appel, ou une zone en cours, n'a
+  qu'une carte, y compris après un redémarrage (la carte se retrouve dans l'historique, P5 bis) et quand
+  deux lignes se croisent (verrou).
+- **P13** (user) — **Le salon se vide tout seul** : une carte finie (réglée, ou terminée sans
+  nouvelles) est effacée **24 heures** après sa fin ; réglable (`BOT_GARDER_HEURES`, 0 = jamais).
+  Le bot n'efface que SES cartes.
+- Précisé par l'agent, à confirmer au banc :
+  - **la carte** montre chaque appelant sur sa ligne : prénom, morts, numéro, tueurs, message, qui arrive
+    vers lui ; un appel réglé reste affiché « réglé » tant que la carte vit ; la carte passe au vert quand
+    TOUS ses appels sont réglés, au gris quand le dernier en cours expire ;
+  - **l'image** de la zone porte un point par appelant (le prénom à côté) ;
+  - un `OMW` ou un `END` va à la carte qui contient cet appel (appelant + numéro) ;
+  - un appel déjà sur une carte y reste, même si sa ligne suivante vient d'une autre zone (sa position y
+    est mise à jour) : jamais un même appel sur deux cartes ;
+  - le titre : « Palrien appelle à l'aide ! » pour un appel, « 2 guildiens appellent à l'aide » au-delà,
+    avec le nom de la zone.
+- Côté addon, le même but (« jouer ensemble ») demande un bouton pour monter un groupe ou un raid avec
+  ceux qui répondent : décision de l'addon (sa D21), pas du bot.
+
+11. [test] Deux appelants dans la même zone : UNE carte (un envoi), deux lignes, une mention, une image
+    à deux points ; un appel dans une autre zone : une autre carte.
+12. [test] `END` de l'un : sa ligne « réglé », la carte toujours en cours ; `END` des deux : verte ; le
+    dernier appel en cours qui expire : grise.
+13. [test] Une carte finie depuis 24 heures est effacée ; jamais une carte en cours, jamais le message
+    d'un autre ; `BOT_GARDER_HEURES=0` : jamais.
+14. [test] Après un redémarrage, la carte de zone se relit avec tous ses appels, et un nouvel appel de
+    la zone la rejoint (pas de 2e carte).
+15. [human] Au banc : deux comptes appellent depuis la même zone ; une carte, deux points, UNE
+    notification. Témoin : un 3e appel depuis une autre zone fait sa propre carte.
+
 ## Phase 2 : l'image de la carte (codée le 2026-10-28)
 
 L'idée du user : une image de la zone avec un point sur le cadavre. Demandée le 2026-10-28 (« on

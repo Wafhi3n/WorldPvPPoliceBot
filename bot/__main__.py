@@ -16,6 +16,7 @@ import discord
 
 from . import config as cfg
 from .game import is_from_game
+from .map_store import MapStore
 from .pvp import PvpRelay
 
 # Ce que le bot doit pouvoir faire (A3) : lire le salon relié et y effacer les lignes traitées, écrire ses
@@ -67,14 +68,16 @@ def main() -> None:
     intents = discord.Intents.default()
     intents.message_content = True
     client = discord.Client(intents=intents)
-    pvp = PvpRelay(client, conf, log)
+    maps = MapStore(conf.state_dir / "cartes", conf.maps_product, conf.maps_locale, log=log) if conf.maps else {}
+    pvp = PvpRelay(client, conf, log, maps=maps)
     started: set[asyncio.Task] = set()
 
     @client.event
     async def on_ready() -> None:
         servers = ", ".join(f"{g.name} ({g.id})" for g in client.guilds) or "aucun"
-        log.info("connecté : %s ; mode %s ; serveurs : %s ; %d carte(s) de zone", client.user, conf.mode, servers,
-                 len(pvp.maps))
+        log.info("connecté : %s ; mode %s ; serveurs : %s", client.user, conf.mode, servers)
+        log.info("cartes de zone : %s", f"wago.tools, {conf.maps_product}, {conf.maps_locale}, {len(maps)} en cache"
+                 if conf.maps else "éteintes (BOT_CARTES=non)")
         log.info("lien d'invitation du bot : %s", discord.utils.oauth_url(client.application_id, permissions=PERMISSIONS))
         for channel_id in (conf.channel_id, conf.pvp_channel_id):
             if channel_id:

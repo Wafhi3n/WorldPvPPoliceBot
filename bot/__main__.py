@@ -15,12 +15,15 @@ import sys
 import discord
 
 from . import config as cfg
+from .game import is_from_game
 from .pvp import PvpRelay
 
-# Ce que le bot doit pouvoir faire : lire le salon relié et y effacer les lignes traitées, écrire ses
-# cartes avec leur image dans #alertes-pvp, y relire ses cartes après un redémarrage.
+# Ce que le bot doit pouvoir faire (A3) : lire le salon relié et y effacer les lignes traitées, écrire ses
+# cartes avec leur image dans #alertes-pvp, y relire ses cartes après un redémarrage, et créer ce salon
+# et le rôle à mentionner s'ils manquent (A1).
 PERMISSIONS = discord.Permissions(view_channel=True, send_messages=True, embed_links=True, attach_files=True,
-                                  read_message_history=True, manage_messages=True)
+                                  read_message_history=True, manage_messages=True, manage_channels=True,
+                                  manage_roles=True)
 
 
 def setup_logging(log_file) -> logging.Logger:
@@ -69,23 +72,29 @@ def main() -> None:
 
     @client.event
     async def on_ready() -> None:
-        log.info("connecté : %s ; salon relié %s ; mode %s ; %d carte(s) de zone", client.user, conf.channel_id,
-                 conf.mode, len(pvp.maps))
-        diagnose(client, conf.channel_id, log)
-        if not conf.pvp_channel_id:
-            log.warning("pas de DISCORD_PVP_CHANNEL_ID : aucune carte d'appel ne sera faite")
-            return
-        diagnose(client, conf.pvp_channel_id, log)
-        if conf.mode == "repondre":   # cartes en cours reprises, puis lignes ratées pendant l'arrêt rattrapées
+        servers = ", ".join(f"{g.name} ({g.id})" for g in client.guilds) or "aucun"
+        log.info("connecté : %s ; mode %s ; serveurs : %s ; %d carte(s) de zone", client.user, conf.mode, servers,
+                 len(pvp.maps))
+        log.info("lien d'invitation du bot : %s", discord.utils.oauth_url(client.application_id, permissions=PERMISSIONS))
+        for channel_id in (conf.channel_id, conf.pvp_channel_id):
+            if channel_id:
+                diagnose(client, channel_id, log)
+        if not pvp.enabled:
+            log.warning("ni DISCORD_PVP_CHANNEL_ID ni BOT_INSTALLER=oui : aucune carte d'appel ne sera faite")
+        elif conf.mode == "repondre":   # installation, cartes en cours reprises, lignes ratées rattrapées
             task = asyncio.create_task(pvp.start())
             started.add(task)
             task.add_done_callback(started.discard)
 
     @client.event
     async def on_message(message: discord.Message) -> None:
-        if message.author == client.user or message.channel.id != conf.channel_id:
+        if message.author == client.user:
             return
-        log.info("message %s", raw(message))
+        if conf.channel_id and message.channel.id != conf.channel_id:
+            return
+        if not is_from_game(message):   # sans salon imposé, le bot voit tout le serveur : il ne note que le jeu
+            return
+        log.info("message du jeu dans #%s : %s", getattr(message.channel, "name", "?"), raw(message))
         if conf.mode == "repondre":
             await pvp.handle(message)
 

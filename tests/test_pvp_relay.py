@@ -183,10 +183,10 @@ class Restart(unittest.TestCase):
                              Posted(None, to_embed(Card("Fini", 3, status=SETTLED, updated_at=0.0)), None))
         channel.older = [recent, old, done]
         relay, _ = make(channel)
-        asyncio.run(relay.sweep())
+        asyncio.run(relay.start())
         self.assertEqual(old.card.status, EXPIRED, "plus de 30 minutes : au gris")
         self.assertEqual((recent.edits, recent.card.status), ([], ACTIVE))
-        self.assertIn(("neuf", 2), relay.cards, "une carte récente reprend son compte à rebours")
+        self.assertIn((None, "neuf", 2), relay.cards, "une carte récente reprend son compte à rebours")
         self.assertEqual(done.edits, [], "une carte réglée n'est pas touchée")
 
 

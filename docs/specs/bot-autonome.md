@@ -1,7 +1,8 @@
 # Un bot PvP autonome, que chaque guilde peut héberger
 
-> État : **brouillon** (2026-10-28) · Demande du user, mise en forme par l'agent · Décisions D1 à D6 du
-> user (2026-10-28) ; A1 à A6 proposées par l'agent, **à valider**. La spec des cartes elles-mêmes
+> État : **validée** le 2026-10-28 · Demande du user, mise en forme par l'agent · Décisions D1 à D6 du
+> user (2026-10-28) ; A1 à A6 proposées par l'agent, **validées par le user le même jour** (« oui je
+> valide »). La spec des cartes elles-mêmes
 > (lecture des lignes, carte, mise à jour, mention, effacement, rattrapage) reste
 > `docs/specs/alertes-pvp.md`, venue de CraftingOrderBot avec le code.
 
@@ -62,26 +63,26 @@ identifiants dans Coolify.
 - **D5** (agent, découle de D4) — Aucune image du jeu versionnée : cartes de zone à la demande.
 - **D6** (user, 2026-10-28) — Le rôle se prend par « Salons et rôles » de la communauté Discord ; le bot
   le crée (mentionnable), il ne le distribue pas.
-- **A1** (agent, à valider) — **Le bot crée ce qui manque**, sur le serveur du salon relié, au
+- **A1** (agent, validée par le user le 2026-10-28) — **Le bot crée ce qui manque**, sur le serveur du salon relié, au
   démarrage : `#alertes-pvp` (nom réglable), en lecture seule pour les membres (ils lisent et
   réagissent, seul le bot écrit) ; le rôle `pvp-police` (nom réglable), mentionnable. Un identifiant
   mis dans la configuration reste prioritaire sur le nom.
-- **A2** (agent, à valider) — **Le salon relié se reconnaît tout seul** : seuls les salons reliés au jeu
+- **A2** (agent, validée par le user le 2026-10-28) — **Le salon relié se reconnaît tout seul** : seuls les salons reliés au jeu
   reçoivent des messages du jeu (`is_from_game`). Au démarrage, le bot relit les derniers messages des
   salons qu'il peut lire (borné) pour retrouver le salon relié de chaque serveur, puis rattrape les
   lignes ratées ; en direct, une ligne d'appel venue du jeu dans un salon le désigne. `DISCORD_CHANNEL_ID`
   reste possible pour forcer un salon. Raison : sur Coolify, `/app/state` n'est pas un volume
   persistant (mesuré le 2026-10-10) ; rien de vital ne doit dépendre d'un fichier.
-- **A3** (agent, à valider) — **Les droits** : le bot écrit dans son journal son lien d'invitation avec
+- **A3** (agent, validée par le user le 2026-10-28) — **Les droits** : le bot écrit dans son journal son lien d'invitation avec
   exactement voir, écrire, intégrer des liens, **joindre des fichiers** (l'image de la carte), lire
   l'historique, gérer les messages (effacer la ligne brute), gérer les salons et gérer les rôles (A1).
-- **A4** (agent, à valider) — **Cartes de zone à la demande** : à la première ligne d'une zone, le bot
+- **A4** (agent, validée par le user le 2026-10-28) — **Cartes de zone à la demande** : à la première ligne d'une zone, le bot
   télécharge `/api/map/{uiMapID}?version=<dernier build>&locale=<langue>&explored=1` sur wago.tools
   (dernier build du produit par `/api/builds/{produit}/latest`, produit `wowf` par défaut, `wowt` pour le
   PTR de Retail ; langue `frFR` par défaut), une requête par seconde au plus, dans son cache (`BOT_STATE`).
-- **A5** (agent, à valider) — **Langue des cartes Discord** : le français d'aujourd'hui ; les libellés
+- **A5** (agent, validée par le user le 2026-10-28) — **Langue des cartes Discord** : le français d'aujourd'hui ; les libellés
   de la carte passent dans une table de traduction (anglais en plus) choisie par une variable.
-- **A6** (agent, à valider) — **L'ordre de la bascule** depuis CraftingOrderBot :
+- **A6** (agent, validée par le user le 2026-10-28) — **L'ordre de la bascule** depuis CraftingOrderBot :
   1. le nouveau bot tourne en `BOT_MODE=journal` (il regarde, ne fait rien) ;
   2. dans UNE même fenêtre de redéploiement, le user vide `DISCORD_PVP_CHANNEL_ID` de CraftingOrderBot
      (son module PvP s'éteint : critère 5 de `alertes-pvp.md`) et passe le nouveau en `repondre` ;
@@ -115,7 +116,9 @@ identifiants dans Coolify.
 - **Configuration** (variables d'environnement, mêmes noms que l'ancien module pour la bascule) :
   `DISCORD_TOKEN` ; facultatifs `DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`, `DISCORD_PVP_ROLE_ID`
   (prioritaires sur les noms), `BOT_MODE` (`journal` par défaut), `BOT_SUPPRIMER` (`oui` par défaut),
-  `BOT_LOG`, `BOT_STATE` ; à venir avec T2-T3 : noms du salon et du rôle, produit et langue des cartes.
+  `BOT_LOG`, `BOT_STATE` ; `DISCORD_PVP_CHANNEL_NAME` (`alertes-pvp`), `DISCORD_PVP_ROLE_NAME`
+  (`pvp-police`), `BOT_INSTALLER` (`oui` : le droit de créer ce qui manque) ; à venir avec T3 : produit
+  et langue des cartes de zone.
 
 ## Renvois
 
@@ -127,8 +130,12 @@ identifiants dans Coolify.
 
 - **T1** — Dépôt, modules repris (`bot/pvp*.py`, `bot/game.py`), config et point d'entrée à un seul
   serveur, comme aujourd'hui ; tests verts (critère 1). FAIT le 2026-10-28 (53 tests).
-- **T2** — Plusieurs serveurs, salon relié reconnu, installation par nom (critères 2 à 4), après
-  validation de A1 à A3.
+- **T2** — Plusieurs serveurs, salon relié reconnu, installation par nom (critères 2 à 4). FAIT le
+  2026-10-28 : `bot/install.py` (salon et rôle trouvés ou créés), `PvpRelay` par serveur (cartes et
+  minuteurs rangés par serveur ; avec `DISCORD_PVP_CHANNEL_ID`, un seul serveur comme avant), sans salon
+  imposé le bot écoute tous les salons et ne retient que les lignes d'appel venues du jeu ; au démarrage
+  il relit les salons qu'il peut relire (pas les autres) pour rattraper. 62 tests ; 5 règles cassées :
+  attrapées. Jamais vu sur Discord.
 - **T3** — Cartes de zone à la demande (critère 5), après validation de A4.
 - **T4** — README complet et guide d'hébergement FR/EN (application Discord, lien d'invitation, Docker,
   Coolify).

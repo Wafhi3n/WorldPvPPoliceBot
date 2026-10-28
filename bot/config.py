@@ -16,9 +16,12 @@ ROOT = Path(__file__).resolve().parent.parent
 @dataclass
 class Config:
     token: str
-    channel_id: int                       # le salon relié au jeu, que le bot LIT (un seul serveur en T1)
-    pvp_channel_id: int | None = None     # #alertes-pvp, où il ÉCRIT les cartes (absent = cartes éteintes)
-    pvp_role_id: int | None = None        # rôle mentionné à un NOUVEL appel (absent = aucune mention)
+    channel_id: int | None = None         # le salon relié imposé (absent : reconnu à ses messages du jeu, A2)
+    pvp_channel_id: int | None = None     # #alertes-pvp imposé : UN serveur, comme le module d'origine
+    pvp_role_id: int | None = None        # rôle imposé, mentionné à un NOUVEL appel
+    pvp_channel_name: str = "alertes-pvp"   # sinon : le salon des cartes, trouvé ou créé par ce nom (A1)
+    pvp_role_name: str = "pvp-police"       # et le rôle, trouvé ou créé (mentionnable) par ce nom
+    install: bool = True                  # BOT_INSTALLER : le droit de créer ce qui manque
     delete_relayed: bool = True           # BOT_SUPPRIMER : la ligne brute quitte le salon relié (P3)
     mode: str = "journal"                 # « journal » : note ce qui passe ; « repondre » : fait les cartes
     log_file: Path = ROOT / "bot.log"     # BOT_LOG
@@ -26,8 +29,9 @@ class Config:
 
     def __repr__(self) -> str:      # jamais le jeton dans une trace
         return (f"Config(channel_id={self.channel_id}, pvp_channel_id={self.pvp_channel_id}, "
-                f"pvp_role_id={self.pvp_role_id}, delete_relayed={self.delete_relayed}, mode={self.mode!r}, "
-                f"log_file={str(self.log_file)!r}, state_dir={str(self.state_dir)!r})")
+                f"pvp_role_id={self.pvp_role_id}, pvp_channel_name={self.pvp_channel_name!r}, "
+                f"pvp_role_name={self.pvp_role_name!r}, install={self.install}, delete_relayed={self.delete_relayed}, "
+                f"mode={self.mode!r}, log_file={str(self.log_file)!r}, state_dir={str(self.state_dir)!r})")
 
 
 def _read_env(path: Path) -> dict[str, str]:
@@ -64,14 +68,14 @@ def load(path: Path = ROOT / ".env") -> Config:
     token = values.get("DISCORD_TOKEN", "")
     if not token:
         raise SystemExit("DISCORD_TOKEN manquant : le taper dans .env (voir .env.example).")
-    channel = _optional_id(values, "DISCORD_CHANNEL_ID")
-    if channel is None:
-        raise SystemExit("DISCORD_CHANNEL_ID manquant : l'identifiant du salon relié au jeu.")
     log = values.get("BOT_LOG", "").strip()
     state = values.get("BOT_STATE", "").strip()
-    return Config(token=token, channel_id=channel,
+    return Config(token=token, channel_id=_optional_id(values, "DISCORD_CHANNEL_ID"),
                   pvp_channel_id=_optional_id(values, "DISCORD_PVP_CHANNEL_ID"),
                   pvp_role_id=_optional_id(values, "DISCORD_PVP_ROLE_ID"),
+                  pvp_channel_name=values.get("DISCORD_PVP_CHANNEL_NAME", "").strip() or "alertes-pvp",
+                  pvp_role_name=values.get("DISCORD_PVP_ROLE_NAME", "").strip() or "pvp-police",
+                  install=_choice(values, "BOT_INSTALLER", "oui", ("oui", "non")) == "oui",
                   delete_relayed=_choice(values, "BOT_SUPPRIMER", "oui", ("oui", "non")) == "oui",
                   mode=_choice(values, "BOT_MODE", "journal", ("journal", "repondre")),
                   log_file=Path(log) if log else ROOT / "bot.log",

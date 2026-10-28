@@ -18,10 +18,17 @@ class Load(unittest.TestCase):
             return cfg.load(Path(d) / "absent.env")
 
     def test_par_defaut(self):
-        c = self.load(BASE)
-        self.assertEqual((c.channel_id, c.pvp_channel_id, c.pvp_role_id), (123, None, None))
+        c = self.load({"DISCORD_TOKEN": "x"})
+        self.assertEqual((c.channel_id, c.pvp_channel_id, c.pvp_role_id), (None, None, None),
+                         "le jeton suffit : salon relié reconnu, salon des cartes et rôle installés (A1, A2)")
+        self.assertEqual((c.pvp_channel_name, c.pvp_role_name, c.install), ("alertes-pvp", "pvp-police", True))
         self.assertEqual((c.mode, c.delete_relayed), ("journal", True), "1er lancement : on regarde ; P3 : on efface")
         self.assertEqual(c.state_dir, cfg.ROOT / "state")
+
+    def test_les_noms(self):
+        c = self.load({**BASE, "DISCORD_PVP_CHANNEL_NAME": "sos", "DISCORD_PVP_ROLE_NAME": "Police",
+                       "BOT_INSTALLER": "non"})
+        self.assertEqual((c.channel_id, c.pvp_channel_name, c.pvp_role_name, c.install), (123, "sos", "Police", False))
 
     def test_les_variables_du_module_pvp(self):
         c = self.load({**BASE, "DISCORD_PVP_CHANNEL_ID": "789", "DISCORD_PVP_ROLE_ID": "555", "BOT_MODE": "repondre",
@@ -30,8 +37,9 @@ class Load(unittest.TestCase):
                          (789, 555, "repondre", False, Path("/app/state")))
 
     def test_les_refus(self):
-        for env in ({"DISCORD_CHANNEL_ID": "123"}, {"DISCORD_TOKEN": "x"}, {**BASE, "DISCORD_PVP_CHANNEL_ID": "#alertes"},
-                    {**BASE, "BOT_MODE": "parler"}, {**BASE, "BOT_SUPPRIMER": "peut-être"}):
+        for env in ({"DISCORD_CHANNEL_ID": "123"}, {**BASE, "DISCORD_PVP_CHANNEL_ID": "#alertes"},
+                    {**BASE, "BOT_MODE": "parler"}, {**BASE, "BOT_SUPPRIMER": "peut-être"},
+                    {**BASE, "BOT_INSTALLER": "toujours"}):
             with self.subTest(env=env), self.assertRaises(SystemExit):
                 self.load(env)
 

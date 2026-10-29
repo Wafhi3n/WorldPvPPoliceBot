@@ -9,6 +9,7 @@ de la zone avec un point. Le rôle `pvp-police` est mentionné, et la carte suit
 Deux guildiens qui appellent dans la même zone partagent la même carte.
 
 Chaque guilde héberge son propre bot (Coolify, Docker ou un PC) : **[guide d'hébergement](docs/hebergement.md)**.
+Cartes en français ou en anglais (`BOT_LANGUE=en`).
 
 ## Développer
 
@@ -35,7 +36,7 @@ and the zone map with a dot. The `pvp-police` role gets pinged, and the card fol
 Two guild members calling in the same zone share one card.
 
 Each guild hosts its own bot (Coolify, Docker or a PC): **[hosting guide](docs/hosting.md)**. The cards
-and the log are in French for now; an English version of the cards is planned.
+come in French or English (`BOT_LANGUE=en`); the log is in French.
 
 Development: same commands as above. The specs (in French) are in `docs/specs/`. MIT licensed. No
 Blizzard images in this repository: zone maps are fetched on demand from [wago.tools](https://wago.tools).

@@ -20,16 +20,16 @@ from dataclasses import dataclass, field
 
 import discord
 
+from . import labels
 from .pvp_line import PvpLine
 
 EXPIRY = 30 * 60   # s sans ligne SOS : l'appel est sans nouvelles (P8 ; D11 de l'addon, 30 min depuis le 2026-10-28)
 MAX_CALLS = 20     # appels au plus sur une carte (un embed a 25 champs) ; au-delà, une autre carte
 
 ACTIVE, SETTLED, EXPIRED = "active", "settled", "expired"
-CLASSES = {"WARRIOR": "Guerrier", "PALADIN": "Paladin", "HUNTER": "Chasseur", "ROGUE": "Voleur",
-           "PRIEST": "Prêtre", "SHAMAN": "Chaman", "MAGE": "Mage", "WARLOCK": "Démoniste", "DRUID": "Druide",
-           "DEATHKNIGHT": "Chevalier de la mort", "MONK": "Moine", "DEMONHUNTER": "Chasseur de démons",
-           "EVOKER": "Évocateur"}
+# Les jetons de classe que l'addon écrit (D15) ; leurs noms affichés vivent dans labels.py, par langue.
+CLASS_TOKENS = ("WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID",
+                "DEATHKNIGHT", "MONK", "DEMONHUNTER", "EVOKER")
 
 Key = tuple[str, int]
 
@@ -90,7 +90,9 @@ class Card:
 
 
 def _killers(line: PvpLine) -> str:
-    return ", ".join(escape(k.name) + (f" ({CLASSES.get(k.cls, k.cls)})" if k.cls else "") for k in line.killers)
+    """Les tueurs en texte, classes dans la langue du bot (un jeton inconnu reste tel quel)."""
+    classes = labels.text()["classes"]
+    return ", ".join(escape(k.name) + (f" ({classes.get(k.cls, k.cls)})" if k.cls else "") for k in line.killers)
 
 
 def update_call(call: Call, line: PvpLine, at: float) -> None:

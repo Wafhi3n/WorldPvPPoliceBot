@@ -11,6 +11,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from .labels import MAP_LOCALES
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -25,7 +27,8 @@ class Config:
     install: bool = True                  # BOT_INSTALLER : le droit de créer ce qui manque
     maps: bool = True                     # BOT_CARTES : l'image de la zone sur la carte (wago.tools, A4)
     maps_product: str = "wowf"            # BOT_CARTES_PRODUIT : wowf = Forever, wowt = PTR de Retail
-    maps_locale: str = "frFR"             # BOT_CARTES_LANGUE : la langue des noms sur l'image
+    maps_locale: str = "frFR"             # BOT_CARTES_LANGUE : la langue des noms sur l'image (sinon : BOT_LANGUE)
+    language: str = "fr"                  # BOT_LANGUE : la langue des cartes, fr ou en (A5 ; le journal reste en français)
     delete_relayed: bool = True           # BOT_SUPPRIMER : la ligne brute quitte le salon relié (P3)
     keep_hours: int = 24                  # BOT_GARDER_HEURES : une carte finie est effacée après (0 : jamais, P13)
     mode: str = "journal"                 # « journal » : note ce qui passe ; « repondre » : fait les cartes
@@ -36,7 +39,7 @@ class Config:
         return (f"Config(channel_id={self.channel_id}, pvp_channel_id={self.pvp_channel_id}, "
                 f"pvp_role_id={self.pvp_role_id}, pvp_channel_name={self.pvp_channel_name!r}, "
                 f"pvp_role_name={self.pvp_role_name!r}, install={self.install}, delete_relayed={self.delete_relayed}, "
-                f"keep_hours={self.keep_hours}, "
+                f"keep_hours={self.keep_hours}, language={self.language!r}, maps_locale={self.maps_locale!r}, "
                 f"mode={self.mode!r}, log_file={str(self.log_file)!r}, state_dir={str(self.state_dir)!r})")
 
 
@@ -83,6 +86,7 @@ def load(path: Path = ROOT / ".env") -> Config:
         raise SystemExit("DISCORD_TOKEN manquant : le taper dans .env (voir .env.example).")
     log = values.get("BOT_LOG", "").strip()
     state = values.get("BOT_STATE", "").strip()
+    language = _choice(values, "BOT_LANGUE", "fr", tuple(MAP_LOCALES))
     return Config(token=token, channel_id=_optional_id(values, "DISCORD_CHANNEL_ID"),
                   pvp_channel_id=_optional_id(values, "DISCORD_PVP_CHANNEL_ID"),
                   pvp_role_id=_optional_id(values, "DISCORD_PVP_ROLE_ID"),
@@ -91,7 +95,8 @@ def load(path: Path = ROOT / ".env") -> Config:
                   install=_choice(values, "BOT_INSTALLER", "oui", ("oui", "non")) == "oui",
                   maps=_choice(values, "BOT_CARTES", "oui", ("oui", "non")) == "oui",
                   maps_product=_pattern(values, "BOT_CARTES_PRODUIT", "wowf", r"[a-z0-9_]+"),
-                  maps_locale=_pattern(values, "BOT_CARTES_LANGUE", "frFR", r"[a-z]{2}[A-Z]{2}"),
+                  maps_locale=_pattern(values, "BOT_CARTES_LANGUE", MAP_LOCALES[language], r"[a-z]{2}[A-Z]{2}"),
+                  language=language,
                   delete_relayed=_choice(values, "BOT_SUPPRIMER", "oui", ("oui", "non")) == "oui",
                   keep_hours=int(_pattern(values, "BOT_GARDER_HEURES", "24", r"\d{1,4}")),
                   mode=_choice(values, "BOT_MODE", "journal", ("journal", "repondre")),

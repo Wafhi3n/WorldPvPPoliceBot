@@ -6,7 +6,7 @@ import unittest
 
 from bot.pvp_cards import (ACTIVE, EXPIRED, EXPIRY, SETTLED, Call, Card, add_responder, expire, is_live, join,
                            next_expiry, open_card, update_call)
-from bot.pvp_embed import COLORS, NOBODY, from_embed, to_embed
+from bot.pvp_embed import COLORS, from_embed, to_embed
 from bot.pvp_line import parse
 
 THREE = "SOS Gnomi Forêt d'Elwynn (42.1, 65.3) #SOS7 m1429 d3 kXyz,Abc,Def cROGUE,MAGE,- : 3 voleurs au pont"
@@ -30,7 +30,7 @@ class OneCall(unittest.TestCase):
             "Où : (42.1, 65.3) · Morts : 3",
             "Tueurs : Xyz (Voleur), Abc (Mage), Def",
             "> 3 voleurs au pont",
-            f"En route : {NOBODY}",
+            "En route : personne pour l'instant",
             "<t:1000:R>",
         ])
         self.assertEqual(embed.footer.text, "m1429 · Gnomi#7", "le pied : la zone et les appels, relus après un redémarrage")

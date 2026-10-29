@@ -82,8 +82,8 @@ writes), and `pvp-police` is mentionable, below the bot's role.
    App* for your own copy), branch `main`.
 2. **Build Pack: Dockerfile.** No domain: the bot listens on no port, it calls Discord. If Coolify insists
    on an exposed port, keep the suggested value and turn off the *health check*.
-3. **Environment Variables**: `DISCORD_TOKEN` (tick *secret*) and `BOT_MODE` = `journal`. Nothing else
-   is required.
+3. **Environment Variables**: `DISCORD_TOKEN` (tick *secret*), `BOT_MODE` = `journal`, and
+   `BOT_LANGUE` = `en` for cards in English. Nothing else is required.
 4. **Persistent Storage** (recommended): a volume mounted on `/app/state`, for the `bot.log` log and the
    zone map cache. Without it, maps are downloaded again after each redeploy; nothing vital lives there.
 5. **Deploy**, then read the service logs (step 4).
@@ -93,7 +93,7 @@ writes), and `pvp-police` is mentionable, below the bot's role.
 ```sh
 git clone <repository URL> WorldPvPPoliceBot
 cd WorldPvPPoliceBot
-cp .env.example .env            # then type the token after DISCORD_TOKEN=, without quotes
+cp .env.example .env            # then type the token after DISCORD_TOKEN=, without quotes, and BOT_LANGUE=en
 docker build -t worldpvppolicebot .
 docker run -d --name worldpvppolicebot --restart unless-stopped \
   --env-file .env -v worldpvppolicebot-state:/app/state worldpvppolicebot
@@ -114,7 +114,7 @@ cd WorldPvPPoliceBot
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-Copy-Item .env.example .env     # then type the token after DISCORD_TOKEN=
+Copy-Item .env.example .env     # then type the token after DISCORD_TOKEN=, and BOT_LANGUE=en
 .\.venv\Scripts\python.exe -m bot
 ```
 
@@ -130,7 +130,7 @@ By default (`BOT_MODE=journal`), the bot connects and logs what it sees, without
 anything. The log is in French; it should start with:
 
 ```
-connecté : World PvP Police#1234 ; mode journal ; serveurs : Your server (…)
+connecté : World PvP Police#1234 ; mode journal ; langue des cartes en ; serveurs : Your server (…)
 lien d'invitation du bot : https://discord.com/oauth2/authorize?…
 ```
 
@@ -175,8 +175,11 @@ server that isn't a Community server, a moderator hands out the role.
   (those from the last 30 minutes).
 - It only reads and edits its own cards: another bot's cards in the same channel are left alone.
 - One bot can serve several servers: each gets its own `#alertes-pvp`.
-- **The cards are in French for now.** An English version is planned. The settings keep their French
-  values (`oui` / `non` = yes / no, `journal`, `repondre`).
+- **Cards in English**: set `BOT_LANGUE=en` (the default is French). The log stays in French, and the
+  settings keep their French values (`oui` / `non` = yes / no, `journal`, `repondre`).
+- The channel and the role keep their French default names. To use others, set
+  `DISCORD_PVP_CHANNEL_NAME` (for example `pvp-alerts`) and `DISCORD_PVP_ROLE_NAME` **before the first
+  run**: renaming later makes the bot look for, and create, a new channel or role with the new name.
 
 ## Settings
 
@@ -186,6 +189,7 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 |---|---|---|
 | `DISCORD_TOKEN` | — | the bot's token (required) |
 | `BOT_MODE` | `journal` | `journal`: log only; `repondre`: make the cards |
+| `BOT_LANGUE` | `fr` | the language of the cards: `fr` or `en` |
 | `DISCORD_PVP_CHANNEL_NAME` | `alertes-pvp` | the cards channel, found or created by this name |
 | `DISCORD_PVP_ROLE_NAME` | `pvp-police` | the role to ping, found or created by this name |
 | `BOT_INSTALLER` | `oui` | `non`: never create a channel or a role |
@@ -196,7 +200,7 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 | `BOT_GARDER_HEURES` | `24` | hours before a finished card is deleted (`0`: never) |
 | `BOT_CARTES` | `oui` | `non`: cards without a zone map |
 | `BOT_CARTES_PRODUIT` | `wowf` | `wowf`: WoW: Forever; `wowt`: Retail PTR; `wow`: Retail |
-| `BOT_CARTES_LANGUE` | `frFR` | language of the names on the map (`enUS`, `deDE`, `esES`…) |
+| `BOT_CARTES_LANGUE` | from `BOT_LANGUE` | language of the names on the map (`frFR`, `enUS`, `deDE`, `esES`…) |
 | `BOT_LOG` | `bot.log` | log file (`/app/state/bot.log` in the image) |
 | `BOT_STATE` | `state` | map cache folder (`/app/state` in the image) |
 

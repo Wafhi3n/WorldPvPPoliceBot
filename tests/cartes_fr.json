@@ -1,0 +1,46 @@
+{
+ "many": {
+  "title": "4 guildiens appellent à l'aide",
+  "description": "**En cours**",
+  "color": 12597547,
+  "footer": "m1429 · Gnomi#7 · Bob#2 · Zed#4@1411 · Lia#1@1411",
+  "fields": [
+   [
+    "Zone",
+    "Forêt d'Elwynn"
+   ],
+   [
+    "Gnomi — appel n°7",
+    "Où : (42.1, 65.3) · Morts : 3\nTueurs : Xyz (Voleur), Abc\n> 3 voleurs au pont\nEn route : Gnomette, Bob\n<t:1793000000:R>"
+   ],
+   [
+    "Bob — appel n°2 · réglé",
+    "Où : zone seule · Morts : 1\nEn route : personne pour l'instant\n<t:1793000100:R>"
+   ],
+   [
+    "Zed — appel n°4 · sans nouvelles",
+    "Où : Durotar (10.0, 20.0) · Morts : 1\nEn route : personne pour l'instant\n<t:1793000200:R>"
+   ],
+   [
+    "Lia — appel n°1 · sans nouvelles",
+    "Où : Durotar · Morts : 2\nEn route : personne pour l'instant\n<t:1793000300:R>"
+   ]
+  ]
+ },
+ "one": {
+  "title": "Gnomi appelle à l'aide !",
+  "description": "**Réglé**",
+  "color": 3050327,
+  "footer": "m1429 · Gnomi#7",
+  "fields": [
+   [
+    "Zone",
+    "Forêt d'Elwynn"
+   ],
+   [
+    "Gnomi — appel n°7 · réglé",
+    "Où : (50.0, 50.0) · Morts : 1\nEn route : personne pour l'instant\n<t:1793000000:R>"
+   ]
+  ]
+ }
+}

@@ -162,7 +162,8 @@ l'aide doivent être reliées ».
   - un appel déjà sur une carte y reste, même si sa ligne suivante vient d'une autre zone (sa position y
     est mise à jour) : jamais un même appel sur deux cartes ;
   - le titre : « Palrien appelle à l'aide ! » pour un appel, « 2 guildiens appellent à l'aide » au-delà,
-    avec le nom de la zone.
+    avec le nom de la zone. Ces libellés sont ceux du français ; en anglais (`BOT_LANGUE=en`, A5 de
+    `bot-autonome.md`), « Palrien is calling for help! », « call #8 », « Where: … · Deaths: … ».
 - Côté addon, le même but (« jouer ensemble ») demande un bouton pour monter un groupe ou un raid avec
   ceux qui répondent : décision de l'addon (sa D21), pas du bot.
 

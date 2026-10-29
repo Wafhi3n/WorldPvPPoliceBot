@@ -131,7 +131,7 @@ Par défaut (`BOT_MODE=journal`), le bot se connecte et note ce qu'il voit, sans
 Le journal doit commencer par :
 
 ```
-connecté : World PvP Police#1234 ; mode journal ; serveurs : Votre serveur (…)
+connecté : World PvP Police#1234 ; mode journal ; langue des cartes fr ; serveurs : Votre serveur (…)
 lien d'invitation du bot : https://discord.com/oauth2/authorize?…
 ```
 
@@ -176,7 +176,7 @@ la liste des salons. Sur un serveur qui n'est pas communautaire, un modérateur 
 - Il ne lit et ne modifie que ses propres cartes : celles d'un autre bot dans le même salon restent
   telles quelles.
 - Un même bot peut servir plusieurs serveurs : chacun a son `#alertes-pvp`.
-- Les cartes sont en français. Une version anglaise est prévue.
+- Les cartes sont en français, ou en anglais avec `BOT_LANGUE=en`. Le journal reste en français.
 
 ## Réglages
 
@@ -186,6 +186,7 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 |---|---|---|
 | `DISCORD_TOKEN` | — | le jeton du bot (obligatoire) |
 | `BOT_MODE` | `journal` | `journal` : note seulement ; `repondre` : fait les cartes |
+| `BOT_LANGUE` | `fr` | la langue des cartes : `fr` ou `en` |
 | `DISCORD_PVP_CHANNEL_NAME` | `alertes-pvp` | le salon des cartes, retrouvé ou créé par ce nom |
 | `DISCORD_PVP_ROLE_NAME` | `pvp-police` | le rôle mentionné, retrouvé ou créé par ce nom |
 | `BOT_INSTALLER` | `oui` | `non` : ne jamais créer de salon ni de rôle |
@@ -196,7 +197,7 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 | `BOT_GARDER_HEURES` | `24` | délai avant d'effacer une carte finie (`0` : jamais) |
 | `BOT_CARTES` | `oui` | `non` : cartes sans image de zone |
 | `BOT_CARTES_PRODUIT` | `wowf` | `wowf` : WoW: Forever ; `wowt` : PTR de Retail ; `wow` : Retail |
-| `BOT_CARTES_LANGUE` | `frFR` | langue des noms sur l'image (`enUS`, `deDE`, `esES`…) |
+| `BOT_CARTES_LANGUE` | selon `BOT_LANGUE` | langue des noms sur l'image (`frFR`, `enUS`, `deDE`, `esES`…) |
 | `BOT_LOG` | `bot.log` | fichier du journal (`/app/state/bot.log` dans l'image) |
 | `BOT_STATE` | `state` | dossier du cache des images (`/app/state` dans l'image) |
 

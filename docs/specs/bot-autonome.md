@@ -120,7 +120,8 @@ identifiants dans Coolify.
   (prioritaires sur les noms), `BOT_MODE` (`journal` par défaut), `BOT_SUPPRIMER` (`oui` par défaut),
   `BOT_LOG`, `BOT_STATE` ; `DISCORD_PVP_CHANNEL_NAME` (`alertes-pvp`), `DISCORD_PVP_ROLE_NAME`
   (`pvp-police`), `BOT_INSTALLER` (`oui` : le droit de créer ce qui manque) ; `BOT_CARTES` (`oui`),
-  `BOT_CARTES_PRODUIT` (`wowf`), `BOT_CARTES_LANGUE` (`frFR`) ; `BOT_GARDER_HEURES` (`24`, 0 = jamais : P13).
+  `BOT_CARTES_PRODUIT` (`wowf`), `BOT_CARTES_LANGUE` (selon `BOT_LANGUE` : `frFR` ou `enUS`) ;
+  `BOT_GARDER_HEURES` (`24`, 0 = jamais : P13) ; `BOT_LANGUE` (`fr` par défaut, ou `en` : A5).
 
 ## Renvois
 
@@ -158,8 +159,15 @@ identifiants dans Coolify.
   la portée `bot` (`invite_link`), et un test épingle le même entier de droits dans les deux guides.
   Adresse du dépôt laissée en blanc (`<adresse du dépôt>`) : il n'existe pas encore sur GitHub. Pas
   essayé : `docker build` (Docker Desktop éteint sur le fixe) ; Coolify le construira à la bascule.
-- **T4 bis** — **A5, pas codée** : les libellés des cartes sont en français seulement (le guide anglais
-  le dit). Une table de traduction et sa variable, AVANT de rendre le dépôt public.
+- **T4 bis** — A5 : les libellés des cartes en français ou en anglais. FAIT le 2026-10-29 :
+  `bot/labels.py` (une table par langue, classes des tueurs comprises), `BOT_LANGUE` (`fr` par défaut,
+  `en`) ; les noms sur l'image de zone suivent la langue sauf `BOT_CARTES_LANGUE` (vide dans
+  `.env.example`). La relecture d'une carte accepte TOUTES les langues : un changement de langue pendant
+  une carte en cours ne perd rien, la carte est réécrite dans la nouvelle à sa mise à jour suivante ;
+  accepté : les classes des tueurs, gardées en texte, n'y passent qu'à la ligne `SOS` suivante. Le pied
+  ne dépend d'aucune langue ; le journal et les noms par défaut du salon et du rôle restent en français.
+  Le français d'avant est épinglé au caractère près (`tests/cartes_fr.json`, relevé avant la table).
+  97 tests ; 4 règles cassées : attrapées.
 - **T5** — Bascule (A6), puis retrait du module PvP de CraftingOrderBot ; critères 7 et 8. Avant la
   bascule : relire les permissions du NOUVEAU bot dans le `#alertes-pvp` existant (il le retrouve par
   son nom et ne règle pas ses permissions : envoyer, intégrer des liens, joindre des fichiers). Les cartes

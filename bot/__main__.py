@@ -15,6 +15,7 @@ import sys
 import discord
 
 from . import config as cfg
+from . import labels
 from .game import is_from_game
 from .map_store import MapStore
 from .pvp import PvpRelay
@@ -69,6 +70,7 @@ def diagnose(client: discord.Client, channel_id: int, log: logging.Logger) -> No
 
 def main() -> None:
     conf = cfg.load()
+    labels.use(conf.language)      # la langue des cartes, une fois pour tout le bot (A5)
     conf.state_dir.mkdir(parents=True, exist_ok=True)
     log = setup_logging(conf.log_file)
     intents = discord.Intents.default()
@@ -81,7 +83,8 @@ def main() -> None:
     @client.event
     async def on_ready() -> None:
         servers = ", ".join(f"{g.name} ({g.id})" for g in client.guilds) or "aucun"
-        log.info("connecté : %s ; mode %s ; serveurs : %s", client.user, conf.mode, servers)
+        log.info("connecté : %s ; mode %s ; langue des cartes %s ; serveurs : %s", client.user, conf.mode,
+                 conf.language, servers)
         log.info("cartes de zone : %s", f"wago.tools, {conf.maps_product}, {conf.maps_locale}, {len(maps)} en cache"
                  if conf.maps else "éteintes (BOT_CARTES=non)")
         log.info("lien d'invitation du bot : %s", invite_link(client.application_id))

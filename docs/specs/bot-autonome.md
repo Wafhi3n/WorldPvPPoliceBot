@@ -104,8 +104,10 @@ identifiants dans Coolify.
    panne = carte sans image, sans erreur.
 6. [check] Aucune image (`.webp`, `.png`) versionnée ; l'image Docker ne copie que `bot/`.
 7. [human] Sur le serveur de test du user : le bot invité par son lien, sans aucun identifiant dans sa
-   configuration hors le jeton, crée `#alertes-pvp` et `pvp-police`, et un appel en jeu y fait sa carte
-   avec l'image de la zone. Témoin : la carte du bot des commandes d'avant la bascule.
+   configuration hors le jeton, **retrouve** `#alertes-pvp` et `pvp-police` (ils existent déjà sur Ost
+   Ardent : la création ne s'y voit pas ; elle se voit sur un serveur neuf, ou en renommant le salon), et
+   un appel en jeu y fait sa carte avec l'image de la zone. Témoin : la carte du bot des commandes d'avant
+   la bascule.
 8. [human] Après la bascule : un appel = UNE carte, UNE mention ; une commande de COC suit son chemin
    habituel dans `#commandes`.
 
@@ -150,5 +152,16 @@ identifiants dans Coolify.
   « en cours » pendant l'arrêt, au même appel qu'une plus récente, n'était jamais grisée ni effacée.
   81 tests ; 7 règles cassées : attrapées. Rendu vérifié sur la vraie carte de Forever (deux prénoms).
 - **T4** — README complet et guide d'hébergement FR/EN (application Discord, lien d'invitation, Docker,
-  Coolify).
-- **T5** — Bascule (A6), puis retrait du module PvP de CraftingOrderBot ; critères 7 et 8.
+  Coolify). FAIT le 2026-10-28 : `docs/hebergement.md` et `docs/hosting.md` (prérequis en jeu : chat
+  Discord séparé ; intent « Message Content » ; `journal` puis `repondre` ; permissions du salon relié et
+  d'un `#alertes-pvp` existant ; dépannage par les lignes du journal). Le lien d'invitation n'a plus que
+  la portée `bot` (`invite_link`), et un test épingle le même entier de droits dans les deux guides.
+  Adresse du dépôt laissée en blanc (`<adresse du dépôt>`) : il n'existe pas encore sur GitHub. Pas
+  essayé : `docker build` (Docker Desktop éteint sur le fixe) ; Coolify le construira à la bascule.
+- **T4 bis** — **A5, pas codée** : les libellés des cartes sont en français seulement (le guide anglais
+  le dit). Une table de traduction et sa variable, AVANT de rendre le dépôt public.
+- **T5** — Bascule (A6), puis retrait du module PvP de CraftingOrderBot ; critères 7 et 8. Avant la
+  bascule : relire les permissions du NOUVEAU bot dans le `#alertes-pvp` existant (il le retrouve par
+  son nom et ne règle pas ses permissions : envoyer, intégrer des liens, joindre des fichiers). Les cartes
+  de CraftingOrderBot déjà dans ce salon ne sont ni relues ni rejointes (le bot ne lit que les siennes ;
+  `test_la_carte_d_un_autre_bot_jamais_rejointe`).

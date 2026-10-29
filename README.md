@@ -2,21 +2,24 @@
 
 *(English below)*
 
-Bot Discord compagnon de l'addon WoW **World PvP Police Guild** : quand un guildien est tué par un
-joueur et appelle à l'aide, la ligne que l'addon écrit dans le salon Discord relié à la guilde devient
-une carte lisible dans `#alertes-pvp` (qui appelle, où, combien de morts, les tueurs, qui arrive, la
-carte de la zone avec un point), mise à jour au fil de l'appel.
+Bot Discord compagnon de l'addon WoW **World PvP Police Guild**. Quand un guildien est tué par un joueur
+et appelle à l'aide, la ligne que l'addon écrit dans le salon Discord relié à la guilde devient une carte
+dans `#alertes-pvp` : qui appelle, où, combien de morts, les tueurs, son message, qui arrive, et l'image
+de la zone avec un point. Le rôle `pvp-police` est mentionné, et la carte suit l'appel jusqu'au bout.
+Deux guildiens qui appellent dans la même zone partagent la même carte.
 
-Chaque guilde peut héberger son propre bot. Le guide d'hébergement complet arrive (spec
-`docs/specs/bot-autonome.md`, tâche T4). En attendant :
+Chaque guilde héberge son propre bot (Coolify, Docker ou un PC) : **[guide d'hébergement](docs/hebergement.md)**.
+
+## Développer
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-Copy-Item .env.example .env   # puis y taper le jeton et les identifiants
-.\.venv\Scripts\python.exe -m bot
-python -m unittest discover -s tests -t .
+.\.venv\Scripts\python.exe -m unittest discover -s tests -t .
 ```
+
+Ce que le bot doit faire, et pourquoi : `docs/specs/alertes-pvp.md` (les cartes) et
+`docs/specs/bot-autonome.md` (un bot par guilde, installation, cartes de zone).
 
 Licence MIT. Aucune image de Blizzard dans ce dépôt : les cartes de zone se téléchargent à la demande
 sur [wago.tools](https://wago.tools).
@@ -25,11 +28,14 @@ sur [wago.tools](https://wago.tools).
 
 ## English
 
-Discord companion bot for the WoW addon **World PvP Police Guild**: when a guild member is killed by a
-player and calls for help, the line the addon writes in the guild's linked Discord channel becomes a
-readable card in `#alertes-pvp` (who calls, where, deaths, killers, who is coming, the zone map with a
-dot), updated as the call goes on.
+Discord companion bot for the WoW addon **World PvP Police Guild**. When a guild member is killed by a
+player and calls for help, the line the addon writes in the guild's linked Discord channel becomes a card
+in `#alertes-pvp`: who is calling, where, how many deaths, the killers, their message, who is on the way,
+and the zone map with a dot. The `pvp-police` role gets pinged, and the card follows the call to the end.
+Two guild members calling in the same zone share one card.
 
-Each guild can host its own bot. A full self-hosting guide is coming (task T4 of
-`docs/specs/bot-autonome.md`). MIT licensed. No Blizzard images in this repository: zone maps are
-fetched on demand from [wago.tools](https://wago.tools).
+Each guild hosts its own bot (Coolify, Docker or a PC): **[hosting guide](docs/hosting.md)**. The cards
+and the log are in French for now; an English version of the cards is planned.
+
+Development: same commands as above. The specs (in French) are in `docs/specs/`. MIT licensed. No
+Blizzard images in this repository: zone maps are fetched on demand from [wago.tools](https://wago.tools).

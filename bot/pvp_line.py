@@ -39,7 +39,7 @@ _TOKEN = re.compile(r"[A-Z]+", re.ASCII)                     # ^%u+$
 
 @dataclass
 class Killer:
-    name: str
+    name: str                # le nom le plus complet connu, « Prénom Nom » sur Forever, sans royaume
     cls: str | None = None   # jeton anglais (ROGUE…), None = classe inconnue (`-`)
 
 
@@ -100,7 +100,7 @@ def _killer_list(names: str, classes: str | None) -> list[Killer] | None:
             cls = None
         elif cls is not None and not _TOKEN.fullmatch(cls):
             return None
-        out.append(Killer(raw, cls))
+        out.append(Killer(raw.replace("_", " "), cls))   # D22 de l'addon : `Prénom_Nom` se relit « Prénom Nom »
     return out
 
 

@@ -54,6 +54,11 @@ class Examples(unittest.TestCase):
         self.assertEqual(one.killers, [Killer("Camparind", "DEATHKNIGHT")])
         self.assertEqual((seven.n, seven.msg), (7, "ON ME CAMPE ATLANCE SAUVE MOA"))
 
+    def test_tueur_en_nom_complet(self):
+        line = parse("SOS Gnomi Duskwood #SOS2 m10 d1 kKrosh_Ombrelune,Xyz cROGUE,- : au pont")
+        self.assertEqual(line.killers, [Killer("Krosh Ombrelune", "ROGUE"), Killer("Xyz")])
+        self.assertEqual(line.msg, "au pont")
+
     def test_tueurs_sans_classe_connue(self):
         self.assertEqual(parse("SOS Gnomi Duskwood #SOS2 m10 d1 kXyz,Abc").killers, [Killer("Xyz"), Killer("Abc")])
 

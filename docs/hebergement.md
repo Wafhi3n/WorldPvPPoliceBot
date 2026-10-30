@@ -76,6 +76,10 @@ ce salon (Discord refuse qu'un bot écrive dans un salon relié au jeu), il n'en
 S'il les crée lui-même, `#alertes-pvp` est en lecture seule pour les membres (ils lisent et réagissent,
 seul le bot écrit), et `pvp-police` est mentionnable, sous le rôle du bot.
 
+Le salon des cartes peut aussi être un **salon d'annonces**, si vous l'avez créé ainsi : donnez au bot le droit
+d'y envoyer des messages. Le bot ne « publie » pas ses cartes : les membres du serveur les voient, mais un
+serveur qui suivrait ce salon ne les recevrait pas. Ce cas n'a pas encore été vérifié en jeu.
+
 ## 3. Lancer le bot
 
 ### Avec Coolify
@@ -92,7 +96,8 @@ seul le bot écrit), et `pvp-police` est mentionnable, sous le rôle du bot.
    `BOT_MODE` = `journal`. Rien d'autre n'est obligatoire. Après un changement : **Redeploy**.
 4. **Persistent Storage** (conseillé) : un volume monté sur `/app/state`, pour le journal `bot.log` et
    le cache des images de zone. Sans lui, les images sont retéléchargées après chaque redéploiement ;
-   rien de vital n'y est rangé.
+   rien de vital n'y est rangé. Prenez un **volume**, pas un dossier du serveur : le bot ne tourne pas en
+   root, et un dossier lui refuserait sans doute l'écriture (`PermissionError` au démarrage).
 5. **Deploy**, puis lisez les logs du service (étape 4).
 
 ### Avec Docker

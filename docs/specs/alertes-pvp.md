@@ -163,7 +163,8 @@ l'aide doivent être reliées ».
   - **la carte** montre chaque appelant sur sa ligne : prénom, morts, numéro, tueurs, message, qui arrive
     vers lui ; un appel réglé reste affiché « réglé » tant que la carte vit ; la carte passe au vert quand
     TOUS ses appels sont réglés, au gris quand le dernier en cours expire ;
-  - **l'image** de la zone porte un point par appelant (le prénom à côté) ;
+  - **l'image** de la zone porte un point par appelant (le prénom à côté) ; des points qui se touchent
+    empilent leurs prénoms en colonne, tous lisibles (vu au PTR le 2026-10-30) ;
   - un `OMW` ou un `END` va à la carte qui contient cet appel (appelant + numéro) ;
   - un appel déjà sur une carte y reste, même si sa ligne suivante vient d'une autre zone (sa position y
     est mise à jour) : jamais un même appel sur deux cartes ;

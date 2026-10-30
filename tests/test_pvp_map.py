@@ -60,6 +60,26 @@ class Render(unittest.TestCase):
             self.assertTrue(any(min(p) > 220 for p in label) and any(max(p) < 60 for p in label),
                             "le prénom à côté du point : blanc cerné de noir")
 
+    def test_deux_points_qui_se_touchent_gardent_leurs_deux_prenoms(self):
+        # Vu au PTR le 2026-10-30 : Palrien (39.8, 55.6) et Boomaz (39.9, 55.7), un seul prénom lisible.
+        def label_rows(points):
+            with tempfile.TemporaryDirectory() as d:
+                data, _ = render(fake_maps(Path(d)), 7, points)
+            with Image.open(io.BytesIO(data)) as image:
+                return {y for y in range(70, 130) if any(min(image.getpixel((x, y))) > 220 for x in range(222, 300))}
+        one = label_rows([(0.5, 0.5, "Gnomi")])
+        two = label_rows([(0.5, 0.5, "Gnomi"), (0.502, 0.502, "Bob")])
+        self.assertTrue(one and min(one) < 100 < max(one), "seul : le prénom centré sur le point")
+        self.assertTrue(any(y < 96 for y in two) and any(y > 104 for y in two), "deux lignes, l'une au-dessus de l'autre")
+        self.assertGreater(max(two) - min(two), 20, "sur deux lignes, pas superposés")
+
+    def test_deux_points_eloignes_ne_s_empilent_pas(self):
+        with tempfile.TemporaryDirectory() as d:
+            data, _ = render(fake_maps(Path(d)), 7, [(0.25, 0.3, "Gnomi"), (0.25, 0.7, "Bob")])
+        with Image.open(io.BytesIO(data)) as image:
+            for y in (60, 140):
+                self.assertTrue(any(min(image.getpixel((x, y))) > 220 for x in range(120, 160)), "chacun à hauteur de son point")
+
     def test_rien_a_dessiner(self):
         with tempfile.TemporaryDirectory() as d:
             index = fake_maps(Path(d))

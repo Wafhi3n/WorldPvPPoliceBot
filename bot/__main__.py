@@ -19,6 +19,7 @@ from . import labels
 from .game import is_from_game
 from .map_store import MapStore
 from .pvp import PvpRelay
+from .pvp_line import parse
 
 # Ce que le bot doit pouvoir faire (A3) : lire le salon relié et y effacer les lignes traitées, écrire ses
 # cartes avec leur image dans #alertes-pvp, y relire ses cartes après un redémarrage, et créer ce salon
@@ -50,6 +51,14 @@ def raw(message: discord.Message) -> str:
     author = message.author
     return (f"id={message.id} author={author!s} bot={author.bot} application_id={message.application_id} "
             f"flags={message.flags.value} content={message.content!r}")
+
+
+def note(log: logging.Logger, mode: str, message: discord.Message) -> None:
+    """Un message du jeu au journal. En `journal`, tout : c'est le but. En `repondre`, les seules lignes
+    d'appel : en chat fusionné, tout le chat de guilde arrive ici comme des messages du jeu, et il n'a pas à
+    rester dans un journal (critère 6 de appel-sans-pont-discord.md, côté addon)."""
+    if mode == "journal" or parse(message.content) is not None:
+        log.info("message du jeu dans #%s : %s", getattr(message.channel, "name", "?"), raw(message))
 
 
 def diagnose(client: discord.Client, channel_id: int, log: logging.Logger) -> None:
@@ -106,7 +115,7 @@ def main() -> None:
             return
         if not is_from_game(message):   # sans salon imposé, le bot voit tout le serveur : il ne note que le jeu
             return
-        log.info("message du jeu dans #%s : %s", getattr(message.channel, "name", "?"), raw(message))
+        note(log, conf.mode, message)
         if conf.mode == "repondre":
             await pvp.handle(message)
 

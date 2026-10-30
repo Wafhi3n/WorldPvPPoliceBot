@@ -168,6 +168,10 @@ identifiants dans Coolify.
   ne dépend d'aucune langue ; le journal et les noms par défaut du salon et du rôle restent en français.
   Le français d'avant est épinglé au caractère près (`tests/cartes_fr.json`, relevé avant la table).
   97 tests ; 4 règles cassées : attrapées.
+- **T4 ter** — Le journal en `repondre` (T3 de `appel-sans-pont-discord.md`, côté addon). FAIT le
+  2026-10-30 : seules les lignes d'appel y restent ; en chat fusionné, tout le chat de guilde arrive dans le
+  salon relié. Le guide suit, avec ce que la 1re installation réelle a appris (clé de déploiement, variables
+  à créer à la main, identifiant collé à la place du jeton).
 - **T5** — Bascule (A6), puis retrait du module PvP de CraftingOrderBot ; critères 7 et 8. Avant la
   bascule : relire les permissions du NOUVEAU bot dans le `#alertes-pvp` existant (il le retrouve par
   son nom et ne règle pas ses permissions : envoyer, intégrer des liens, joindre des fichiers). Les cartes

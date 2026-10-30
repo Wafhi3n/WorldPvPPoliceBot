@@ -19,7 +19,9 @@ pings the `pvp-police` role, then keeps the card updated until the call ends.
   officer, in game: Guild & Communities (`J`), right-click the guild, guild settings, then Discord
   settings. Link the server and the channel there, and tick the box that **keeps Discord chat separate**
   from guild chat. Without that box, the addon treats the guild as not linked and writes nothing to
-  Discord.
+  Discord, unless a player types `/wpp fusion on`: their calls are then also written to guild chat, where
+  the whole guild sees them, and the bridge carries them to Discord. That path hasn't been checked in game
+  yet.
 - **The World PvP Police Guild addon** for your guild members. A member whose Battle.net account isn't
   linked to Discord: their call still goes out in game, but it hasn't been checked yet whether it
   reaches Discord.
@@ -78,12 +80,17 @@ writes), and `pvp-police` is mentionable, below the bot's role.
 
 ### With Coolify
 
-1. **New Resource**, then the bot's repository (*Public Repository*, or *Private Repository with GitHub
-   App* for your own copy), branch `main`.
+1. **New Resource**, then the bot's repository, branch `main`: *Public Repository*, or for your own private
+   copy *Private Repository with GitHub App* or *Private Repository with Deploy Key*. With a deploy key: in
+   Coolify, **Keys & Tokens**, generate a key; on GitHub, in the repository's **Settings**, **Deploy keys**,
+   paste its **public** key without allowing write access (a key works for one repository only); the
+   repository address looks like `git@github.com:account/repo.git`.
 2. **Build Pack: Dockerfile.** No domain: the bot listens on no port, it calls Discord. If Coolify insists
    on an exposed port, keep the suggested value and turn off the *health check*.
-3. **Environment Variables**: `DISCORD_TOKEN` (tick *secret*), `BOT_MODE` = `journal`, and
-   `BOT_LANGUE` = `en` for cards in English. Nothing else is required.
+3. **Environment Variables**: Coolify creates none of them, add them yourself: `DISCORD_TOKEN` (the token
+   from the **Bot** tab, without quotes; tick *secret*, keep it available at runtime, not at build time),
+   `BOT_MODE` = `journal`, and `BOT_LANGUE` = `en` for cards in English. Nothing else is required. After a
+   change: **Redeploy**.
 4. **Persistent Storage** (recommended): a volume mounted on `/app/state`, for the `bot.log` log and the
    zone map cache. Without it, maps are downloaded again after each redeploy; nothing vital lives there.
 5. **Deploy**, then read the service logs (step 4).
@@ -140,6 +147,9 @@ message"):
 ```
 message du jeu dans #your-linked-channel : id=… content='…'
 ```
+
+In `journal`, every message from the game is logged there: with merged chat, that's all of guild chat. In
+`repondre`, only the call lines stay.
 
 If it doesn't, see troubleshooting below. If it does, set `BOT_MODE` to `repondre` and restart the bot.
 On start, it finds or creates what it's missing:
@@ -208,6 +218,8 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 
 | The log says, or you see | Cause and fix |
 |---|---|
+| `DISCORD_TOKEN manquant` ("missing") | the variable doesn't reach the bot: misspelled name, not available at runtime, or no **Redeploy** since. |
+| `Improper token has been passed` (401) | that isn't the token: it's in the **Bot** tab, in three parts separated by dots. Not the server ID, the Application ID or the Client Secret. A **Reset Token** also cancels the previous one. |
 | `PrivilegedIntentsRequired` on start | Message Content Intent isn't on (step 1). |
 | `salon … INTROUVABLE` | a forced id (`DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`) the bot can't see: not invited, or not allowed to view that channel. |
 | no `message du jeu` line after a call | the bot can't see the linked channel (its permissions), the guild doesn't keep Discord chat separate, or the call didn't reach Discord (in game, "Ton appel" shows how the sending went). |
@@ -227,7 +239,8 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 ## What the bot reads and keeps
 
 - It only handles messages posted by the game in the linked channel; it ignores everything else.
-- Its log keeps those lines as they are (caller's name, zone, message).
+- In `repondre`, its log keeps only the call lines, as they are (caller's name, zone, message). In
+  `journal`, it keeps every message from the game, so all of guild chat with merged chat.
 - It only talks to Discord and [wago.tools](https://wago.tools), for the zone maps. No player data goes
   to wago.tools: only the zone number, the game and the language.
 - No game image is stored in this repository or in the Docker image.

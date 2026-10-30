@@ -83,7 +83,8 @@ def load(path: Path = ROOT / ".env") -> Config:
     values.update({k: v for k, v in os.environ.items() if k.startswith(("DISCORD_", "BOT_"))})
     token = values.get("DISCORD_TOKEN", "")
     if not token:
-        raise SystemExit("DISCORD_TOKEN manquant : le taper dans .env (voir .env.example).")
+        raise SystemExit("DISCORD_TOKEN manquant : le mettre dans .env, ou dans les variables d'environnement "
+                         "du conteneur (Coolify, Docker).")
     log = values.get("BOT_LOG", "").strip()
     state = values.get("BOT_STATE", "").strip()
     language = _choice(values, "BOT_LANGUE", "fr", tuple(MAP_LOCALES))

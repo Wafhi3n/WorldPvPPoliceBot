@@ -18,7 +18,9 @@ de morts, les tueurs, son message, qui arrive, et l'image de la zone avec un poi
 - **La guilde reliée à un serveur Discord, en chat Discord séparé.** Le maître de guilde ou un officier,
   en jeu : Guilde et communautés (`J`), clic droit sur la guilde, réglages de la guilde, puis réglages
   Discord. Il y relie le serveur et le salon, et coche la case qui **sépare le chat Discord** du chat de
-  guilde. Sans cette case, l'addon traite la guilde comme non reliée et n'écrit rien sur Discord.
+  guilde. Sans cette case, l'addon traite la guilde comme non reliée et n'écrit rien sur Discord, sauf
+  si un joueur tape `/wpp fusion on` : ses appels s'écrivent alors aussi dans le chat de guilde, visibles
+  de toute la guilde, et le pont les porte sur Discord. Ce chemin n'a pas encore été vérifié en jeu.
 - **L'addon World PvP Police Guild** chez les guildiens. Un guildien dont le compte Battle.net n'est pas
   relié à Discord : son appel part bien en jeu, mais on n'a pas encore vérifié qu'il arrive sur Discord.
 - **Un serveur Discord** sur lequel vous pouvez inviter un bot.
@@ -78,12 +80,16 @@ seul le bot écrit), et `pvp-police` est mentionnable, sous le rôle du bot.
 
 ### Avec Coolify
 
-1. **New Resource**, puis le dépôt du bot (*Public Repository*, ou *Private Repository with GitHub App*
-   pour votre propre copie), branche `main`.
+1. **New Resource**, puis le dépôt du bot, branche `main` : *Public Repository*, ou pour votre propre
+   copie privée *Private Repository with GitHub App*, ou *Private Repository with Deploy Key*. Avec une clé
+   de déploiement : dans Coolify, **Keys & Tokens**, générez une clé ; sur GitHub, dans **Settings**,
+   **Deploy keys** du dépôt, collez sa clé **publique**, sans autoriser l'écriture (une clé ne sert qu'à
+   un seul dépôt) ; l'adresse du dépôt prend la forme `git@github.com:compte/depot.git`.
 2. **Build Pack : Dockerfile.** Pas de domaine : le bot n'écoute aucun port, c'est lui qui appelle
    Discord. Si Coolify exige un port exposé, laissez la valeur proposée et désactivez le *health check*.
-3. **Environment Variables** : `DISCORD_TOKEN` (cochez *secret*) et `BOT_MODE` = `journal`. Rien
-   d'autre n'est obligatoire.
+3. **Environment Variables** : Coolify n'en crée aucune, ajoutez-les : `DISCORD_TOKEN` (le jeton de
+   l'onglet **Bot**, sans guillemets ; cochez *secret*, gardez-le disponible à l'exécution, pas au build) et
+   `BOT_MODE` = `journal`. Rien d'autre n'est obligatoire. Après un changement : **Redeploy**.
 4. **Persistent Storage** (conseillé) : un volume monté sur `/app/state`, pour le journal `bot.log` et
    le cache des images de zone. Sans lui, les images sont retéléchargées après chaque redéploiement ;
    rien de vital n'y est rangé.
@@ -140,6 +146,9 @@ Faites ensuite un appel en jeu (ou attendez le prochain). Cette ligne doit appar
 ```
 message du jeu dans #votre-salon-relie : id=… content='…'
 ```
+
+En `journal`, chaque message du jeu y est noté : en chat fusionné, c'est tout le chat de guilde. En
+`repondre`, seules les lignes d'appel restent.
 
 Si elle n'apparaît pas, voyez le dépannage plus bas. Si elle apparaît, passez `BOT_MODE` à `repondre`
 et redémarrez le bot. Au démarrage, il retrouve ou crée ce qui lui manque :
@@ -205,6 +214,8 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 
 | Le journal dit, ou vous voyez | Cause et remède |
 |---|---|
+| `DISCORD_TOKEN manquant` | la variable n'arrive pas au bot : nom mal écrit, pas disponible à l'exécution, ou pas de **Redeploy** depuis. |
+| `Improper token has been passed` (401) | ce n'est pas le jeton : il est dans l'onglet **Bot**, en trois morceaux séparés par des points. Ni l'identifiant du serveur, ni l'Application ID, ni le Client Secret. Un **Reset Token** annule aussi le précédent. |
 | `PrivilegedIntentsRequired` au démarrage | Message Content Intent n'est pas activé (étape 1). |
 | `salon … INTROUVABLE` | un identifiant imposé (`DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`) que le bot ne voit pas : pas invité, ou pas le droit de voir ce salon. |
 | aucune ligne `message du jeu` après un appel | le bot ne voit pas le salon relié (ses permissions), la guilde n'est pas en chat Discord séparé, ou l'appel n'a pas atteint Discord (en jeu, « Ton appel » dit où en est l'envoi). |
@@ -224,7 +235,8 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 ## Ce que le bot lit et garde
 
 - Il ne traite que les messages publiés par le jeu dans le salon relié ; il ignore tous les autres.
-- Son journal garde ces lignes telles quelles (nom de l'appelant, zone, message).
+- En `repondre`, son journal garde les seules lignes d'appel, telles quelles (nom de l'appelant, zone,
+  message). En `journal`, il garde tout message du jeu, tout le chat de guilde en chat fusionné.
 - Il ne contacte que Discord et [wago.tools](https://wago.tools), pour les images de zone. Aucune donnée
   de joueur ne part chez wago.tools : seulement le numéro de la zone, le jeu et la langue.
 - Aucune image du jeu n'est rangée dans ce dépôt ni dans l'image Docker.

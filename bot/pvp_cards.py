@@ -122,6 +122,13 @@ def join(card: Card, line: PvpLine, at: float) -> Call:
     return call
 
 
+def older_calls(card: Card, line: PvpLine, at: float) -> list[Call]:
+    """Les appels encore en cours de ce guildien sous un AUTRE numéro : l'addon n'en a qu'un d'ouvert à la
+    fois, le dernier arrivé remplace les autres (P14, comme Alert:OnSOS de l'addon)."""
+    who = key(line.caller_name, line.n)[0]
+    return [c for c in card.calls if c.key[0] == who and c.n != line.n and is_live(c, at)]
+
+
 def add_responder(call: Call, name: str) -> bool:
     """Un « j'arrive » : un nom n'apparaît qu'une fois. Ne prolonge pas l'appel (comme l'addon)."""
     if name.casefold() in (r.casefold() for r in call.en_route):

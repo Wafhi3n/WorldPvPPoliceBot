@@ -93,6 +93,98 @@ class OneCardPerZone(unittest.TestCase):
         self.assertEqual((len(channel.sent), len(channel.sent[0].card.calls)), (1, 2))
 
 
+class CallsAgain(unittest.TestCase):
+    """P14 : le même guildien rappelle sous un nouveau numéro (vu au PTR le 2026-10-30, Palrien n°13 + n°14)."""
+
+    AGAIN = "SOS Gnomi Forêt d'Elwynn (42.2, 65.4) #SOS8 m1429 d1 kXyz cROGUE : encore eux"
+
+    def calls(self, sent):
+        return [(c.caller, c.n, c.status) for c in sent.card.calls]
+
+    def test_meme_zone_le_nouveau_remplace_l_ancien(self):
+        channel = Channel()
+        relay, _ = make(channel, role=555)
+        run(relay, GNOMI, "OMW Gnomette > Gnomi #SOS7", self.AGAIN)
+        sent = channel.sent[0]
+        self.assertEqual((len(channel.sent), self.calls(sent)), (1, [("Gnomi", 8, ACTIVE)]),
+                         "la même carte, un seul appel : le n°7 n'y est plus")
+        self.assertEqual(sent.embeds[0].title, "Gnomi appelle à l'aide !")
+        self.assertEqual(sent.card.calls[0].en_route, [], "son « j'arrive » était pour l'ancien appel, comme dans l'addon")
+        self.assertTrue(all(m.roles is False for m in sent.edits), "pas de nouvelle mention")
+
+    def test_un_seul_clic_regle_la_carte(self):
+        channel = Channel()
+        relay, _ = make(channel)
+        run(relay, GNOMI, self.AGAIN, "END Gnomi #SOS8")
+        self.assertEqual(channel.sent[0].card.status, SETTLED, "l'ancien appel ne retient plus la carte en cours")
+
+    def test_une_ligne_tardive_de_l_ancien_appel_est_ignoree(self):
+        channel = Channel()
+        relay, _ = make(channel)
+        run(relay, GNOMI, self.AGAIN, "OMW Gnomette > Gnomi #SOS7", "END Gnomi #SOS7")
+        sent = channel.sent[0]
+        self.assertEqual(self.calls(sent), [("Gnomi", 8, ACTIVE)], "l'END du n°7 ne règle pas le n°8")
+        self.assertEqual(sent.card.calls[0].en_route, [])
+
+    def test_les_autres_guildiens_restent(self):
+        channel = Channel()
+        relay, _ = make(channel)
+        run(relay, GNOMI, BOB, self.AGAIN)
+        sent = channel.sent[0]
+        self.assertEqual(self.calls(sent), [("Bob", 2, ACTIVE), ("Gnomi", 8, ACTIVE)])
+        self.assertEqual(sent.embeds[0].title, "2 guildiens appellent à l'aide")
+
+    def test_autre_zone_l_ancien_appel_est_regle(self):
+        channel = Channel()
+        relay, _ = make(channel, role=555)
+        run(relay, GNOMI, "SOS Gnomi Durotar (10.0, 20.0) #SOS8 m1411 d1")
+        first, second = channel.sent
+        self.assertEqual((self.calls(first), first.card.status), ([("Gnomi", 7, SETTLED)], SETTLED),
+                         "il n'a plus d'appel ouvert là-bas : la carte passe au vert")
+        self.assertEqual((self.calls(second), second.content), ([("Gnomi", 8, ACTIVE)], "<@&555>"),
+                         "une autre zone : sa carte, sa mention")
+
+    def test_autre_zone_les_autres_gardent_la_carte_en_cours(self):
+        channel = Channel()
+        relay, _ = make(channel)
+        run(relay, GNOMI, BOB, "SOS Gnomi Durotar (10.0, 20.0) #SOS8 m1411 d1")
+        self.assertEqual(self.calls(channel.sent[0]), [("Gnomi", 7, SETTLED), ("Bob", 2, ACTIVE)])
+        self.assertEqual(channel.sent[0].card.status, ACTIVE)
+
+    def test_un_appel_regle_reste_affiche(self):
+        channel = Channel()
+        relay, _ = make(channel)
+        run(relay, GNOMI, BOB, "END Gnomi #SOS7", self.AGAIN)
+        sent = channel.sent[0]
+        self.assertEqual(self.calls(sent), [("Gnomi", 7, SETTLED), ("Bob", 2, ACTIVE), ("Gnomi", 8, ACTIVE)])
+        self.assertEqual(sent.embeds[0].title, "2 guildiens appellent à l'aide", "deux joueurs, pas trois appels")
+
+    def test_un_numero_plus_petit_remplace_aussi(self):
+        # Un autre poste, ou une base effacée, repart de 1 : le dernier arrivé compte, comme Alert:OnSOS de l'addon.
+        channel = Channel()
+        relay, _ = make(channel)
+        run(relay, GNOMI, "SOS Gnomi Forêt d'Elwynn (42.2, 65.4) #SOS1 m1429 d1")
+        self.assertEqual(self.calls(channel.sent[0]), [("Gnomi", 1, ACTIVE)])
+
+    def test_le_titre_compte_les_joueurs(self):
+        card = Card(1429, "Elwynn", [Call("Gnomi", 7, status=SETTLED), Call("GNOMI", 8)])
+        self.assertEqual(to_embed(card).title, "GNOMI appelle à l'aide !")
+
+    def test_la_casse_du_nom_ne_compte_pas(self):
+        channel = Channel()
+        relay, _ = make(channel)
+        run(relay, GNOMI, "SOS GNOMI Forêt d'Elwynn (42.2, 65.4) #SOS8 m1429 d1")
+        self.assertEqual(self.calls(channel.sent[0]), [("GNOMI", 8, ACTIVE)])
+
+    def test_apres_un_redemarrage(self):
+        channel = Channel()
+        first, _ = make(channel)
+        run(first, GNOMI)
+        second, _ = make(channel)          # le bot redémarre
+        run(second, self.AGAIN)
+        self.assertEqual((len(channel.sent), self.calls(channel.sent[0])), (1, [("Gnomi", 8, ACTIVE)]))
+
+
 class Restart(unittest.TestCase):
     def test_la_carte_de_zone_retrouvee(self):
         channel = Channel()

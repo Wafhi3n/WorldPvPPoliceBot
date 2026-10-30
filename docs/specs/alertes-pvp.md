@@ -153,6 +153,12 @@ l'aide doivent être reliées ».
 - **P13** (user) — **Le salon se vide tout seul** : une carte finie (réglée, ou terminée sans
   nouvelles) est effacée **24 heures** après sa fin ; réglable (`BOT_GARDER_HEURES`, 0 = jamais).
   Le bot n'efface que SES cartes.
+- **P14** (user, 2026-10-30, après la carte « 2 guildiens » de Palrien n°13 + n°14 au PTR) — **Un guildien n'a
+  qu'un appel en cours** : l'addon n'en ouvre qu'un à la fois, donc une ligne `SOS` sous un autre numéro
+  remplace les appels encore en cours de ce guildien, comme `Alert:OnSOS` côté addon (le dernier arrivé
+  compte, même avec un numéro plus petit : un autre poste repart de 1). Sur la carte que le nouvel appel
+  rejoint, l'ancien disparaît, avec son « en route » ; sur la carte d'une autre zone, il passe « réglé ». Une
+  ligne `OMW` ou `END` de l'ancien numéro, arrivée après, est ignorée.
 - Précisé par l'agent, à confirmer au banc :
   - **la carte** montre chaque appelant sur sa ligne : prénom, morts, numéro, tueurs, message, qui arrive
     vers lui ; un appel réglé reste affiché « réglé » tant que la carte vit ; la carte passe au vert quand
@@ -161,7 +167,8 @@ l'aide doivent être reliées ».
   - un `OMW` ou un `END` va à la carte qui contient cet appel (appelant + numéro) ;
   - un appel déjà sur une carte y reste, même si sa ligne suivante vient d'une autre zone (sa position y
     est mise à jour) : jamais un même appel sur deux cartes ;
-  - le titre : « Palrien appelle à l'aide ! » pour un appel, « 2 guildiens appellent à l'aide » au-delà,
+  - le titre : « Palrien appelle à l'aide ! » pour un joueur, « 2 guildiens appellent à l'aide » au-delà (des
+    joueurs, pas des appels : un appel réglé et son rappel font un seul guildien),
     avec le nom de la zone. Ces libellés sont ceux du français ; en anglais (`BOT_LANGUE=en`, A5 de
     `bot-autonome.md`), « Palrien is calling for help! », « call #8 », « Where: … · Deaths: … ».
 - Côté addon, le même but (« jouer ensemble ») demande un bouton pour monter un groupe ou un raid avec
@@ -177,6 +184,12 @@ l'aide doivent être reliées ».
     la zone la rejoint (pas de 2e carte).
 15. [human] Au banc : deux comptes appellent depuis la même zone ; une carte, deux points, UNE
     notification. Témoin : un 3e appel depuis une autre zone fait sa propre carte.
+16. [test] (P14) Le même guildien rappelle : même zone, l'ancien appel disparaît, un seul « C'est réglé »
+    rend la carte verte, les autres guildiens restent ; autre zone, l'ancien passe « réglé » ; une ligne
+    tardive de l'ancien numéro ne change rien ; pareil après un redémarrage.
+17. [human] (P14) Au banc : A appelle, clique « C'est réglé » alors que la ligne de fin ne peut pas partir
+    (case « séparer » décochée entre-temps), puis rappelle : la carte n'affiche que le dernier appel, sous
+    son prénom, et passe au vert au clic suivant.
 
 ## Phase 2 : l'image de la carte (codée le 2026-10-28)
 

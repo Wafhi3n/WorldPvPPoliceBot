@@ -76,6 +76,10 @@ ce salon (Discord refuse qu'un bot écrive dans un salon relié au jeu), il n'en
 S'il les crée lui-même, `#alertes-pvp` est en lecture seule pour les membres (ils lisent et réagissent,
 seul le bot écrit), et `pvp-police` est mentionnable, sous le rôle du bot.
 
+Le salon des cartes peut aussi être un **salon d'annonces**, si vous l'avez créé ainsi : donnez au bot le droit
+d'y envoyer des messages. Le bot ne « publie » pas ses cartes : les membres du serveur les voient, mais un
+serveur qui suivrait ce salon ne les recevrait pas. Ce cas n'a pas encore été vérifié en jeu.
+
 ## 3. Lancer le bot
 
 ### Avec Coolify

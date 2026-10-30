@@ -76,6 +76,10 @@ permissions alone:
 If it creates them itself, `#alertes-pvp` is read-only for members (they read and react, only the bot
 writes), and `pvp-police` is mentionable, below the bot's role.
 
+The cards channel can also be an **announcement channel**, if you created it that way: give the bot the right
+to send messages there. The bot doesn't "publish" its cards: server members see them, but a server following
+that channel wouldn't receive them. This case hasn't been checked in game yet.
+
 ## 3. Run the bot
 
 ### With Coolify

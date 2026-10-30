@@ -49,8 +49,10 @@ bout de 24 heures : personne ne voit que c'est toujours le même, ni ne peut dir
 
 ## Décisions
 
-- **W1** (user, 2026-10-30) — Salon relié pour les données, `#alerte-pvp` et le rôle `pvp-police` pour
-  l'alerte, forum `wanted` pour le tableau.
+- **W1** (user, 2026-10-30) — Salon relié pour les données, `#alerte-pvp` (un salon d'annonces) et le rôle
+  `pvp-police` pour l'alerte, forum `wanted` pour le tableau des personnes ou guildes recherchées. discord.py
+  traite un salon d'annonces comme un salon texte : les cartes n'ont rien à changer, et le bot ne les publie
+  pas (elles sont modifiées, et la publication est limitée en nombre).
 - **W2** (user, « ok go » sur la proposition de l'agent) — **Le bot compte**, pas l'addon. L'idée de départ du
   user (« l'addon va conserver les stats ») est écartée pour la raison ci-dessus.
 - **W3** (même accord) — **Le nom complet dans la ligne** (D22 de `appel-a-l-aide.md`), fait d'abord.

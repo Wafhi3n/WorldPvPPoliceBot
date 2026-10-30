@@ -6,7 +6,7 @@ Une carte porte TOUT ce qu'il faut pour la reprendre (rien n'est stocké ailleur
     nom   : « Palrien — appel n°8 » (+ « · réglé » ou « · sans nouvelles »)
     texte : « Où : (39.8, 55.4) · Morts : 2 », « Tueurs : … », « > message », « En route : … »,
             puis l'heure de sa dernière ligne `<t:…:R>` (l'heure relative de Discord, relue telle quelle).
-Le titre : « Palrien appelle à l'aide ! » pour un appel, « 2 guildiens appellent à l'aide » au-delà.
+Le titre : « Palrien appelle à l'aide ! » pour un joueur, « 2 guildiens appellent à l'aide » au-delà.
 Les libellés sont ceux de la langue du bot (labels.py, A5) : ci-dessus, le français. La relecture accepte
 toutes les langues ; le pied n'en a aucune.
 """
@@ -33,9 +33,10 @@ _TIME = re.compile(r"<t:(\d+):R>")
 
 def title(card: Card) -> str:
     t = labels.text()
-    if len(card.calls) == 1:
-        return t["one"].format(caller=escape(card.calls[0].caller))
-    return t["many"].format(n=len(card.calls))
+    players = {c.key[0] for c in card.calls}      # des joueurs : un appel réglé et son rappel font un seul guildien
+    if len(players) == 1:
+        return t["one"].format(caller=escape(card.calls[-1].caller))
+    return t["many"].format(n=len(players))
 
 
 def _where(call: Call, card: Card) -> str:

@@ -31,7 +31,7 @@ import discord
 from .game import delete_relayed, is_from_game
 from .install import Server, install
 from .pvp_cards import (ACTIVE, EXPIRY, MAX_CALLS, SETTLED, Card, add_responder, expire, is_live, join, key,
-                        next_expiry, open_card, update_call)
+                        next_expiry, older_calls, open_card, update_call)
 from .pvp_embed import from_embed, to_embed
 from .pvp_line import PvpLine, parse
 from .pvp_map import load_index, render
@@ -192,6 +192,7 @@ class PvpRelay:
             if card is not None and expire(card, at):           # l'ancien appel au même numéro se fige
                 await self._edit(card)
             zone = await self._zone_card(server, line.map, at)
+            await self._replace_older(server, line, at, zone)
             if zone is None:
                 return await self._open(server, line, at)
             join(zone, line, at)                                # P10 : la même carte, sans nouvelle mention
@@ -207,6 +208,23 @@ class PvpRelay:
         else:
             call.status = SETTLED
         return await self._edit(card)
+
+    async def _replace_older(self, server: Server, line: PvpLine, at: float, zone: Card | None) -> None:
+        """Le guildien rappelle sous un autre numéro (P14) : sur la carte que le nouvel appel va rejoindre,
+        l'ancien disparaît ; sur une autre, il passe « réglé », et la carte au vert s'il était le dernier."""
+        for card in self._known(server):
+            older = older_calls(card, line, at)
+            if not older:
+                continue
+            if card is zone:
+                card.calls = [c for c in card.calls if c not in older]
+                for call in older:
+                    self.cards.pop((server.guild_id,) + call.key, None)
+                continue
+            for call in older:
+                call.status = SETTLED
+            self._arm(card)
+            await self._edit(card)
 
     async def _open(self, server: Server, line: PvpLine, at: float) -> bool:
         """Une zone sans carte en cours : une nouvelle carte, avec la mention du rôle."""

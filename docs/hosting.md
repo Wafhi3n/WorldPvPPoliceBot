@@ -97,6 +97,8 @@ that channel wouldn't receive them. This case hasn't been checked in game yet.
    change: **Redeploy**.
 4. **Persistent Storage** (recommended): a volume mounted on `/app/state`, for the `bot.log` log and the
    zone map cache. Without it, maps are downloaded again after each redeploy; nothing vital lives there.
+   Use a **volume**, not a folder on the server: the bot doesn't run as root, and a folder would probably
+   refuse it write access (`PermissionError` on start).
 5. **Deploy**, then read the service logs (step 4).
 
 ### With Docker

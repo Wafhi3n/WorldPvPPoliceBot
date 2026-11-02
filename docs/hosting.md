@@ -36,7 +36,7 @@ pings the `pvp-police` role, then keeps the card updated until the call ends.
    - **Reset Token**, then copy the token: Discord shows it only once. It's the bot's password. It never
      goes in a message, an issue, a screenshot or a commit.
    - Under **Privileged Gateway Intents**, turn on **Message Content Intent**. Without it the bot can't
-     read the text of the in-game lines, and it refuses to start (`PrivilegedIntentsRequired`).
+     read the text of the in-game lines, and it refuses to start (`Discord refuse la connexion`).
    - Untick **Public Bot**, so only you can invite it. If Discord refuses, first set the **Installation**
      tab, *Install Link*, to *None*.
 3. **General Information** tab: note the **Application ID**.

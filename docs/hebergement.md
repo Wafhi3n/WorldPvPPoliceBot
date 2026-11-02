@@ -35,7 +35,7 @@ de morts, les tueurs, son message, qui arrive, et l'image de la zone avec un poi
    - **Reset Token**, puis copiez le jeton : Discord ne l'affiche qu'une fois. C'est le mot de passe du
      bot. Il ne va jamais dans un message, un ticket, une capture d'écran ou un commit.
    - Sous **Privileged Gateway Intents**, activez **Message Content Intent**. Sans lui, le bot ne lit
-     pas le texte des lignes du jeu, et il refuse de démarrer (`PrivilegedIntentsRequired`).
+     pas le texte des lignes du jeu, et il refuse de démarrer (`Discord refuse la connexion`).
    - Décochez **Public Bot**, pour que vous seul puissiez l'inviter. Si Discord refuse, mettez d'abord
      l'onglet **Installation**, *Install Link*, sur *None*.
 3. Onglet **General Information** : notez l'**Application ID**.

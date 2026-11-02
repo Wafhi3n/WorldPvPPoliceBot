@@ -78,10 +78,13 @@ async def _role(guild, name: str, log: logging.Logger):
     return role
 
 
-async def install(guild, channel_name: str, role_name: str, log: logging.Logger) -> Server | None:
-    """Le salon des cartes et le rôle de ce serveur, trouvés ou créés ; None sans salon des cartes."""
+async def install(guild, channel_name: str, role_name: str, log: logging.Logger, role_id: int | None = None) -> Server | None:
+    """Le salon des cartes et le rôle de ce serveur, trouvés ou créés ; None sans salon des cartes. Avec un rôle déjà réglé
+    (`role_id`), aucun rôle n'est cherché ni créé."""
     alerts = await _alerts(guild, channel_name, log)
     if alerts is None:
         return None
+    if role_id is not None:
+        return Server(guild.id, alerts, role_id)
     role = await _role(guild, role_name, log)
     return Server(guild.id, alerts, role.id if role is not None else None)

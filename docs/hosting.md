@@ -49,10 +49,11 @@ plenty for a guild, and it's why each guild runs its own.
 Open this link with `APPLICATION_ID` replaced by yours, and pick the guild's server:
 
 ```
-https://discord.com/oauth2/authorize?client_id=APPLICATION_ID&scope=bot&permissions=268561424
+https://discord.com/oauth2/authorize?client_id=APPLICATION_ID&scope=bot+applications.commands&permissions=268561424
 ```
 
-The bot also writes this link to its log on every start (`lien d'invitation du bot : …`).
+The bot also writes this link to its log on every start (`lien d'invitation du bot : …`). If the bot is already on the server
+and `/setup` doesn't show up: open this link again, without kicking it.
 
 | Permission | What for |
 |---|---|
@@ -95,8 +96,8 @@ that channel wouldn't receive them. This case hasn't been checked in game yet.
    from the **Bot** tab, without quotes; tick *secret*, keep it available at runtime, not at build time),
    `BOT_MODE` = `journal`, and `BOT_LANGUE` = `en` for cards in English. Nothing else is required. After a
    change: **Redeploy**.
-4. **Persistent Storage** (recommended): a volume mounted on `/app/state`, for the `bot.log` log and the
-   zone map cache. Without it, maps are downloaded again after each redeploy; nothing vital lives there.
+4. **Persistent Storage** (recommended): a volume mounted on `/app/state`, for the `bot.log` log, the zone
+   map cache and the `/setup` settings. Without it, each redeploy erases those settings, and maps are downloaded again.
    Use a **volume**, not a folder on the server: the bot doesn't run as root, and a folder would probably
    refuse it write access (`PermissionError` on start).
 5. **Deploy**, then read the service logs (step 4).
@@ -243,7 +244,7 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 | `DISCORD_PVP_CHANNEL_ID` | empty | force the cards channel (the bot then serves one server only) |
 | `DISCORD_PVP_ROLE_ID` | empty | force the role to ping |
 | `DISCORD_PVP_PROTECTORS_CHANNEL_ID` | empty | the channel of the online protectors list (step 6); empty: no list |
-| `DISCORD_GUIDE_CATEGORY_ID` | empty | the category where the guide for administrators is posted (below); empty: no guide |
+| `DISCORD_GUIDE_CATEGORY_ID` | empty | the category where the guide for administrators is posted (below); empty, and without `/setup`: no guide |
 | `BOT_SUPPRIMER` | `oui` | delete the raw line from the linked channel |
 | `BOT_GARDER_HEURES` | `24` | hours before a finished card is deleted (`0`: never) |
 | `BOT_CARTES` | `oui` | `non`: cards without a zone map |
@@ -270,6 +271,38 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 | `suppression refusée` ("deletion refused"), the raw line stays | the bot lacks Manage Messages on the linked channel. |
 | `carte de zone … pas téléchargée` ("zone map not downloaded") | wago.tools unreachable: the card goes out without a map, retried 10 minutes later. `BOT_CARTES=non` to do without. |
 
+## Set up the bot from Discord: `/setup`
+
+The most common settings can also be set by command, without redeploying, and **server by server**. A command wins over the variable,
+which stays as the fallback: a service already set up has nothing to redo.
+
+| Command | What it does | Replaces |
+|---|---|---|
+| `/setup voir` | Shows each setting, where it comes from, and what's missing | |
+| `/setup salon-alertes salon` | The cards channel | `DISCORD_PVP_CHANNEL_ID` |
+| `/setup role role` | The role to ping, also listed as protectors; `@everyone` and a managed role are refused | `DISCORD_PVP_ROLE_ID` |
+| `/setup categorie-guide categorie` | The guide's category (below); it's posted right away | `DISCORD_GUIDE_CATEGORY_ID` |
+| `/setup effacer reglage` | Forgets a setting made here, and goes back to the variable | |
+
+Server owner and administrators only, even if another role can see these commands through the Integrations settings. Replies follow
+`BOT_LANGUE`; the command names stay in French. If several bots offer `/setup`, Discord shows the name of each.
+
+**When changing channels**, new cards go to the new one. Open cards finish in the old one, and its finished cards no longer delete
+themselves: remove them by hand.
+
+**What stays where it's hosted**: the token, `BOT_MODE`, the language, the zone maps, the linked channel, and the protectors list: it
+needs privileged intents, and a setting made by command would turn them on at the next restart; on a portal where they're off, the bot
+wouldn't start anymore, cards included.
+
+**Variable and several servers**: `DISCORD_PVP_CHANNEL_ID` only counts for that channel's server. Another server of the bot has its own
+channel: the `/setup` one, otherwise found or created by name on its first call line (`BOT_INSTALLER=non` to avoid that).
+
+Settings live in `/app/state/reglages.json`: without the volume, a redeploy loses them, and the bot goes back to its variables.
+
+```
+INFO réglages : 3 posés par commande (fichier /app/state/reglages.json)
+```
+
 ## Post a guide for administrators (optional)
 
 On every start, the bot can post a guide to how it works in a `world-pvp-police` channel, in the `BOT_LANGUE` language. Its messages
@@ -277,8 +310,7 @@ are edited, not doubled, and it touches no other message.
 
 1. Create a category, and choose who sees it: the bot sets no permissions.
 2. In that category, give the bot: View Channels, Manage Channels, Send Messages, Read Message History.
-3. Right-click the category, **Copy Channel ID** (Developer Mode), and put that id alone in `DISCORD_GUIDE_CATEGORY_ID`. It needs
-   `BOT_MODE=repondre`.
+3. `/setup categorie-guide`, or the category's id, alone, in `DISCORD_GUIDE_CATEGORY_ID`. It needs `BOT_MODE=repondre`.
 
 ## Updating
 

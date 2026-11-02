@@ -5,8 +5,9 @@ met à jour LA carte de sa zone dans #alertes-pvp (spec alertes-pvp.md, B-T3, P1
   appel n'est jamais sur deux cartes, et jamais deux cartes pour une même zone en cours (P12).
 - Le rôle n'est mentionné qu'à la PUBLICATION d'une carte (P6, P11), jamais à une modification ni pour
   un 2e appelant, jamais `@everyone` ; le texte des joueurs ne va que dans l'embed (critère 2).
-- Plusieurs serveurs (bot-autonome.md, A1-A2) : chaque serveur a ses cartes dans SON salon des cartes,
-  trouvé ou créé par son nom (`install.py`) ; avec `DISCORD_PVP_CHANNEL_ID`, un seul serveur.
+- Plusieurs serveurs (bot-autonome.md, A1-A2) : chaque serveur a ses cartes dans SON salon des cartes : celui de
+  `/setup salon-alertes`, sinon celui de `DISCORD_PVP_CHANNEL_ID` s'il est sur ce serveur, sinon trouvé ou créé par son
+  nom (`install.py`).
 - La ligne brute quitte le salon relié (`BOT_SUPPRIMER=oui`, P3) seulement si la carte est faite ;
   un envoi en échec la GARDE (critère 6).
 - Rien n'est gardé d'un démarrage à l'autre : à la 1re rencontre d'un serveur, ses cartes en cours sont
@@ -29,22 +30,26 @@ from collections import deque
 import discord
 
 from .game import delete_relayed, is_from_game
-from .install import Server, install
+from .install import Server, find_role, install
 from .pvp_cards import (ACTIVE, EXPIRY, MAX_CALLS, SETTLED, Card, add_responder, expire, is_live, join, key,
                         next_expiry, older_calls, open_card, update_call)
 from .pvp_embed import from_embed, to_embed
 from .pvp_line import PvpLine, parse
 from .pvp_map import load_index, render
+from .settings import Settings
 
 HISTORY = 200        # messages relus dans #alertes-pvp (les cartes) ou dans le salon relié (le rattrapage)
 CLEAN_EVERY = 3600   # s entre deux nettoyages du salon des cartes
 
 
 class PvpRelay:
-    def __init__(self, client, conf, log: logging.Logger, clock=time.time, sleep=asyncio.sleep, maps=None):
+    def __init__(self, client, conf, log: logging.Logger, clock=time.time, sleep=asyncio.sleep, maps=None,
+                 settings: Settings | None = None):
         self.client, self.conf, self.log, self.clock, self.sleep = client, conf, log, clock, sleep
+        self.settings = settings or Settings(conf)
         self.maps = load_index() if maps is None else maps   # uiMapID → image, ou un magasin (map_store)
-        self.servers: dict = {}            # id du serveur (None : un seul, configuré) → Server
+        self.servers: dict = {}            # id du serveur (None : une ligne sans serveur connu) → Server
+        self.cleaning: asyncio.Task | None = None
         self.cards: dict = {}              # (serveur, appelant, numéro) → Card (plusieurs clés, une carte)
         self.lock = asyncio.Lock()
         self.timers: dict = {}             # id(carte) → minuteur de son prochain appel sans nouvelles
@@ -89,29 +94,61 @@ class PvpRelay:
 
     @property
     def configured(self) -> bool:
-        """Un seul serveur, aux identifiants configurés (le mode du module d'origine)."""
+        """Une variable DISCORD_PVP_CHANNEL_ID, qui ne vaut que pour le serveur de son salon."""
         return bool(getattr(self.conf, "pvp_channel_id", None))
 
     @property
     def enabled(self) -> bool:
-        return self.configured or bool(getattr(self.conf, "install", False))
+        return self.configured or bool(getattr(self.conf, "install", False)) or self.settings.any_stored("pvp_channel")
 
-    def _gid(self, guild):
-        return None if self.configured else getattr(guild, "id", None)
+    def _role_id(self, guild) -> int | None:
+        """Le rôle à mentionner : réglé par `/setup`, sinon par la variable, sinon trouvé par son nom, jamais créé ici."""
+        gid = getattr(guild, "id", None)
+        role_id = self.settings.get(gid, "pvp_role")
+        if role_id is not None or guild is None:
+            return role_id
+        role = find_role(guild, getattr(self.conf, "pvp_role_name", "pvp-police"))
+        return role.id if role is not None else None
 
-    async def _server(self, guild) -> Server | None:
-        """Le salon des cartes et le rôle du serveur de ce message : configurés, déjà connus, ou installés
-        (trouvés ou créés par leur nom), puis ses cartes en cours relues. Appelée SOUS le verrou : un
-        serveur ne s'installe et ne se relit qu'une fois."""
-        gid = self._gid(guild)
-        if gid in self.servers:
-            return self.servers[gid]
-        server = None
+    async def _resolve(self, guild) -> Server | None:
+        """`/setup` pour ce serveur ; sinon la variable, si son salon est sur ce serveur ; sinon le nom, salon créé s'il manque."""
+        gid = getattr(guild, "id", None)
+        posted = self.settings.stored(gid, "pvp_channel")
+        if posted is not None:
+            channel = next((c for c in guild.text_channels if c.id == posted), None)
+            return Server(gid, channel, self._role_id(guild)) if channel is not None else None
         if self.configured:
             channel = self.client.get_channel(self.conf.pvp_channel_id)
-            server = Server(None, channel, getattr(self.conf, "pvp_role_id", None)) if channel else None
-        elif guild is not None:
-            server = await install(guild, self.conf.pvp_channel_name, self.conf.pvp_role_name, self.log)
+            if channel is None:
+                return None
+            home = getattr(channel, "guild", guild)
+            if guild is None or getattr(home, "id", None) == gid:
+                return Server(gid, channel, self._role_id(guild))
+        if guild is None or not getattr(self.conf, "install", False):
+            return None
+        return await install(guild, self.conf.pvp_channel_name, self.conf.pvp_role_name, self.log,
+                             self.settings.get(gid, "pvp_role"))
+
+    async def moved(self, guild) -> None:
+        """Un réglage de ce serveur vient de changer par `/setup` : la ligne suivante le relit, et relit ce nouveau salon. Les
+        cartes en cours finissent là où elles sont ; celles de l'ancien salon ne s'effacent plus toutes seules."""
+        async with self.lock:
+            self.servers.pop(guild.id, None)
+        if getattr(self.conf, "mode", None) == "repondre":
+            self._start_cleaning()
+
+    def _start_cleaning(self) -> None:
+        """Un bot démarré sans salon peut en recevoir un par `/setup` : le nettoyage part alors, une seule fois."""
+        if self.cleaning is None:
+            self.cleaning = asyncio.create_task(self._clean_loop())
+
+    async def _server(self, guild) -> Server | None:
+        """Le salon des cartes et le rôle du serveur de ce message, puis ses cartes en cours relues. Appelée SOUS le verrou : un
+        serveur ne s'installe et ne se relit qu'une fois."""
+        gid = getattr(guild, "id", None)
+        if gid in self.servers:
+            return self.servers[gid]
+        server = await self._resolve(guild)
         if server is None:
             self.log.warning("pas de salon des cartes pour %s", getattr(guild, "name", "ce serveur"))
             return None
@@ -388,13 +425,18 @@ class PvpRelay:
 
     async def start(self) -> None:
         """Au démarrage, pour chaque serveur : installation et cartes en cours relues, lignes ratées
-        rattrapées ; puis le nettoyage, toutes les heures."""
-        guilds = [None] if self.configured else list(getattr(self.client, "guilds", []))
+        rattrapées ; puis le nettoyage, toutes les heures. Avec la variable, un serveur sans réglage ne s'installe qu'à sa
+        première ligne ; et le rattrapage du serveur de la variable ne lit que `DISCORD_CHANNEL_ID`, comme avant `/setup`."""
+        guilds = list(getattr(self.client, "guilds", []))
+        posted = [g for g in guilds if self.settings.stored(g.id, "pvp_channel") is not None]
+        home = None
+        if self.configured:
+            home = getattr(self.client.get_channel(self.conf.pvp_channel_id), "guild", None)
+            guilds = [g for g in [home, *posted] if g is not None] or [None]
+            guilds = list({getattr(g, "id", None): g for g in guilds}.values())
         for guild in guilds:
             async with self.lock:
                 server = await self._server(guild)
             if server is not None:
-                await self.catch_up(guild, server)
-        task = asyncio.create_task(self._clean_loop())
-        self.tasks.add(task)
-        task.add_done_callback(self.tasks.discard)
+                await self.catch_up(None if guild is home and guild not in posted else guild, server)
+        self._start_cleaning()

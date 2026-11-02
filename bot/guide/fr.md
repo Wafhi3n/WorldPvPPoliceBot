@@ -1,6 +1,15 @@
 # World PvP Police Bot
 
-Quand un guildien appelle à l'aide depuis le jeu, avec l'addon World PvP Police Guild, le bot en fait une carte sur Discord. Il n'a aucune commande : tout se règle sur son hébergement.
+Quand un guildien appelle à l'aide depuis le jeu, avec l'addon World PvP Police Guild, le bot en fait une carte sur Discord.
+
+## Régler le bot : `/setup`
+
+Réservé aux administrateurs. Si plusieurs bots proposent `/setup`, Discord affiche le nom de chacun : prends celui de World PvP Police. Commence par `/setup voir` : il montre chaque réglage et ce qui manque.
+
+- `/setup salon-alertes` : le salon des cartes
+- `/setup role` : le rôle mentionné à chaque nouvelle carte, et listé comme protecteurs
+- `/setup categorie-guide` : la catégorie où publier ce guide
+- `/setup effacer` : oublie un réglage posé ici, et revient à celui de l'hébergement
 
 ## La carte d'appel
 
@@ -24,10 +33,8 @@ Si son salon est réglé, le bot y tient un seul message : les porteurs du rôle
 ## Réglages sur l'hébergement
 
 - `BOT_MODE` : `journal` note sans rien faire, `repondre` fait les cartes
-- `DISCORD_PVP_CHANNEL_ID` : le salon des cartes
-- `DISCORD_PVP_ROLE_ID` : le rôle mentionné
 - `DISCORD_PVP_PROTECTORS_CHANNEL_ID` : le salon de la liste des protecteurs ; il demande d'allumer Server Members Intent et Presence Intent sur le portail Discord, avant de la poser
-- `DISCORD_GUIDE_CATEGORY_ID` : la catégorie où le bot publie ce guide, mis à jour à chaque déploiement
+- `DISCORD_PVP_CHANNEL_ID`, `DISCORD_PVP_ROLE_ID`, `DISCORD_GUIDE_CATEGORY_ID` : les mêmes réglages que `/setup`, qui l'emporte
 
 ## Si rien n'arrive
 

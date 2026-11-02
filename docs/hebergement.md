@@ -48,10 +48,11 @@ Discord. C'est largement assez pour une guilde, et c'est la raison pour laquelle
 Ouvrez ce lien en remplaçant `APPLICATION_ID` par le vôtre, et choisissez le serveur de la guilde :
 
 ```
-https://discord.com/oauth2/authorize?client_id=APPLICATION_ID&scope=bot&permissions=268561424
+https://discord.com/oauth2/authorize?client_id=APPLICATION_ID&scope=bot+applications.commands&permissions=268561424
 ```
 
-Le bot écrit aussi ce lien dans son journal à chaque démarrage (`lien d'invitation du bot : …`).
+Le bot écrit aussi ce lien dans son journal à chaque démarrage (`lien d'invitation du bot : …`). Le bot est déjà sur le serveur
+et `/setup` n'y apparaît pas : rouvrez ce lien, sans l'exclure.
 
 | Droit demandé | Pour quoi faire |
 |---|---|
@@ -94,9 +95,9 @@ serveur qui suivrait ce salon ne les recevrait pas. Ce cas n'a pas encore été 
 3. **Environment Variables** : Coolify n'en crée aucune, ajoutez-les : `DISCORD_TOKEN` (le jeton de
    l'onglet **Bot**, sans guillemets ; cochez *secret*, gardez-le disponible à l'exécution, pas au build) et
    `BOT_MODE` = `journal`. Rien d'autre n'est obligatoire. Après un changement : **Redeploy**.
-4. **Persistent Storage** (conseillé) : un volume monté sur `/app/state`, pour le journal `bot.log` et
-   le cache des images de zone. Sans lui, les images sont retéléchargées après chaque redéploiement ;
-   rien de vital n'y est rangé. Prenez un **volume**, pas un dossier du serveur : le bot ne tourne pas en
+4. **Persistent Storage** (conseillé) : un volume monté sur `/app/state`, pour le journal `bot.log`, le
+   cache des images de zone et les réglages de `/setup`. Sans lui, chaque redéploiement efface ces réglages,
+   et les images sont retéléchargées. Prenez un **volume**, pas un dossier du serveur : le bot ne tourne pas en
    root, et un dossier lui refuserait sans doute l'écriture (`PermissionError` au démarrage).
 5. **Deploy**, puis lisez les logs du service (étape 4).
 
@@ -238,7 +239,7 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 | `DISCORD_PVP_CHANNEL_ID` | vide | imposer le salon des cartes (le bot ne sert alors qu'un serveur) |
 | `DISCORD_PVP_ROLE_ID` | vide | imposer le rôle mentionné |
 | `DISCORD_PVP_PROTECTORS_CHANNEL_ID` | vide | le salon de la liste des protecteurs connectés (étape 6) ; vide : pas de liste |
-| `DISCORD_GUIDE_CATEGORY_ID` | vide | la catégorie où publier le guide pour les administrateurs (ci-dessous) ; vide : pas de guide |
+| `DISCORD_GUIDE_CATEGORY_ID` | vide | la catégorie où publier le guide pour les administrateurs (ci-dessous) ; vide, et sans `/setup` : pas de guide |
 | `BOT_SUPPRIMER` | `oui` | effacer la ligne brute du salon relié |
 | `BOT_GARDER_HEURES` | `24` | délai avant d'effacer une carte finie (`0` : jamais) |
 | `BOT_CARTES` | `oui` | `non` : cartes sans image de zone |
@@ -265,6 +266,38 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 | `suppression refusée`, la ligne brute reste | Gérer les messages manque au bot sur le salon relié. |
 | `carte de zone … pas téléchargée` | wago.tools injoignable : la carte part sans image, nouvel essai 10 minutes plus tard. `BOT_CARTES=non` pour s'en passer. |
 
+## Régler le bot depuis Discord : `/setup`
+
+Les réglages les plus courants se posent aussi par commande, sans redéployer, et **serveur par serveur**. Une commande l'emporte sur
+la variable, qui reste le secours : un service déjà réglé n'a rien à refaire.
+
+| Commande | Effet | Remplace |
+|---|---|---|
+| `/setup voir` | Montre chaque réglage, d'où il vient, et ce qui manque | |
+| `/setup salon-alertes salon` | Le salon des cartes | `DISCORD_PVP_CHANNEL_ID` |
+| `/setup role role` | Le rôle mentionné, et listé comme protecteurs ; `@everyone` et un rôle géré sont refusés | `DISCORD_PVP_ROLE_ID` |
+| `/setup categorie-guide categorie` | La catégorie du guide (ci-dessous) ; il est publié tout de suite | `DISCORD_GUIDE_CATEGORY_ID` |
+| `/setup effacer reglage` | Oublie un réglage posé ici, et revient à la variable | |
+
+Réservé au propriétaire et aux administrateurs, même si un autre rôle voit ces commandes par les réglages d'Intégrations. Les réponses
+suivent `BOT_LANGUE` ; les noms des commandes restent en français. Si plusieurs bots proposent `/setup`, Discord affiche le nom de chacun.
+
+**En changeant de salon**, les nouvelles cartes vont dans le nouveau. Les cartes en cours finissent dans l'ancien, et ses cartes finies
+ne s'effacent plus toutes seules : à supprimer à la main.
+
+**Ce qui reste sur l'hébergement** : le jeton, `BOT_MODE`, la langue, les images de zone, le salon relié, et la liste des protecteurs :
+elle demande des intents privilégiés, et un réglage posé par commande les allumerait au redémarrage ; sur un portail où ils sont éteints,
+le bot ne démarrerait plus, cartes comprises.
+
+**Variable et plusieurs serveurs** : `DISCORD_PVP_CHANNEL_ID` ne vaut que pour le serveur de ce salon. Un autre serveur du bot a son
+propre salon : celui de `/setup`, sinon trouvé ou créé par son nom à sa première ligne d'appel (`BOT_INSTALLER=non` pour l'éviter).
+
+Les réglages sont dans `/app/state/reglages.json` : sans le volume, un redéploiement les perd, et le bot revient à ses variables.
+
+```
+INFO réglages : 3 posés par commande (fichier /app/state/reglages.json)
+```
+
 ## Publier un guide pour les administrateurs (facultatif)
 
 À chaque démarrage, le bot peut publier un guide de son fonctionnement dans un salon `world-pvp-police`, dans la langue de
@@ -272,8 +305,7 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 
 1. Créez une catégorie, et choisissez qui la voit : le bot ne règle aucun droit.
 2. Dans cette catégorie, donnez au bot : voir les salons, gérer les salons, envoyer des messages, lire l'historique.
-3. Clic droit sur la catégorie, **Copier l'identifiant** (Mode développeur), et mettez cet id seul dans
-   `DISCORD_GUIDE_CATEGORY_ID`. Il faut `BOT_MODE=repondre`.
+3. `/setup categorie-guide`, ou l'id de la catégorie, seul, dans `DISCORD_GUIDE_CATEGORY_ID`. Il faut `BOT_MODE=repondre`.
 
 ## Mettre à jour
 

@@ -10,11 +10,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class Invite(unittest.TestCase):
-    def test_portee_bot_seule(self):
+    def test_le_bot_et_ses_commandes(self):
         url = invite_link(123)
         self.assertIn("client_id=123", url)
-        self.assertIn("scope=bot&", url)
-        self.assertNotIn("applications.commands", url)   # le bot n'a aucune commande slash
+        self.assertIn("scope=bot+applications.commands&", url, "sans ça, /setup n'apparaît pas sur le serveur")
 
     def test_droits(self):
         self.assertIn(f"permissions={PERMISSIONS.value}", invite_link(123))
@@ -25,7 +24,7 @@ class Invite(unittest.TestCase):
     def test_le_guide_recopie_les_memes_droits(self):
         for guide in ("hebergement.md", "hosting.md"):
             text = (ROOT / "docs" / guide).read_text(encoding="utf-8")
-            self.assertIn(f"scope=bot&permissions={PERMISSIONS.value}", text, guide)
+            self.assertIn(f"scope=bot+applications.commands&permissions={PERMISSIONS.value}", text, guide)
 
 
 if __name__ == "__main__":

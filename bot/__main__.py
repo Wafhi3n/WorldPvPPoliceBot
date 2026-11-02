@@ -13,6 +13,7 @@ import logging
 import sys
 
 import discord
+from discord import app_commands
 
 from . import config as cfg
 from . import labels
@@ -22,6 +23,8 @@ from .map_store import MapStore
 from .protectors import Protectors
 from .pvp import PvpRelay
 from .pvp_line import parse
+from .settings import Settings
+from .setup_commands import SetupGroup
 
 # Ce que le bot doit pouvoir faire (A3) : lire le salon relié et y effacer les lignes traitées, écrire ses
 # cartes avec leur image dans #alertes-pvp, y relire ses cartes après un redémarrage, et créer ce salon
@@ -32,9 +35,10 @@ PERMISSIONS = discord.Permissions(view_channel=True, send_messages=True, embed_l
 
 
 def invite_link(application_id: int) -> str:
-    """Le lien d'invitation : la portée `bot` seule (aucune commande slash) et les droits ci-dessus. Le guide
-    d'hébergement (docs/hebergement.md, docs/hosting.md) en recopie l'entier des droits."""
-    return discord.utils.oauth_url(application_id, permissions=PERMISSIONS, scopes=("bot",))
+    """Le lien d'invitation : le bot, ses commandes `/setup`, et les droits ci-dessus. Le guide d'hébergement
+    (docs/hebergement.md, docs/hosting.md) en recopie l'entier des droits. Rouvrir ce lien sur un serveur où le bot est déjà met
+    ses droits à jour."""
+    return discord.utils.oauth_url(application_id, permissions=PERMISSIONS, scopes=("bot", "applications.commands"))
 
 
 def make_intents(protectors: bool = False) -> discord.Intents:
@@ -96,11 +100,25 @@ def main() -> None:
     log = setup_logging(conf.log_file)
     client = discord.Client(intents=make_intents(bool(conf.protectors_channel_id)))
     maps = MapStore(conf.state_dir / "cartes", conf.maps_product, conf.maps_locale, log=log) if conf.maps else {}
-    pvp = PvpRelay(client, conf, log, maps=maps)
-    protectors = Protectors(client, conf, log)
+    settings = Settings(conf, conf.state_dir / "reglages.json", log)
+    log.info("réglages : %d posés par commande (fichier %s)", settings.count(), settings.path)
+    pvp = PvpRelay(client, conf, log, maps=maps, settings=settings)
+    protectors = Protectors(client, conf, log, settings=settings)
     protectors.listen()
-    guide = Guide(client, conf, log)
+    guide = Guide(client, conf, log, settings=settings)
+    tree = app_commands.CommandTree(client)
+    tree.add_command(SetupGroup(settings, pvp, guide, lambda: invite_link(client.application_id), log))
     started: set[asyncio.Task] = set()
+
+    async def sync_commands() -> None:
+        """Une fois par processus, pas à chaque on_ready : Discord limite ces envois, et on_ready revient à chaque
+        reconnexion. Sans commandes, les cartes marchent quand même."""
+        try:
+            log.info("commandes envoyées à Discord : %s", ", ".join(c.name for c in await tree.sync()))
+        except discord.DiscordException as err:
+            log.warning("commandes pas envoyées à Discord : %s", err)
+
+    client.setup_hook = sync_commands
 
     def launch(work) -> None:
         task = asyncio.create_task(work)
@@ -120,10 +138,9 @@ def main() -> None:
                 diagnose(client, channel_id, log)
         if protectors.enabled:
             launch(protectors.refresh())
-        if guide.enabled:
-            launch(guide.publish())
+        launch(guide.publish())
         if not pvp.enabled:
-            log.warning("ni DISCORD_PVP_CHANNEL_ID ni BOT_INSTALLER=oui : aucune carte d'appel ne sera faite")
+            log.warning("ni /setup salon-alertes, ni DISCORD_PVP_CHANNEL_ID, ni BOT_INSTALLER=oui : aucune carte d'appel ne sera faite")
         elif conf.mode == "repondre":   # installation, cartes en cours reprises, lignes ratées rattrapées
             launch(pvp.start())
 

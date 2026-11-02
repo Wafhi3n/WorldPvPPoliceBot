@@ -35,7 +35,7 @@ de morts, les tueurs, son message, qui arrive, et l'image de la zone avec un poi
    - **Reset Token**, puis copiez le jeton : Discord ne l'affiche qu'une fois. C'est le mot de passe du
      bot. Il ne va jamais dans un message, un ticket, une capture d'écran ou un commit.
    - Sous **Privileged Gateway Intents**, activez **Message Content Intent**. Sans lui, le bot ne lit
-     pas le texte des lignes du jeu, et il refuse de démarrer (`PrivilegedIntentsRequired`).
+     pas le texte des lignes du jeu, et il refuse de démarrer (`Discord refuse la connexion`).
    - Décochez **Public Bot**, pour que vous seul puissiez l'inviter. Si Discord refuse, mettez d'abord
      l'onglet **Installation**, *Install Link*, sur *None*.
 3. Onglet **General Information** : notez l'**Application ID**.
@@ -173,6 +173,36 @@ l'Onboarding du serveur une question (par exemple « Être prévenu des appels �
 réponse donne le rôle `pvp-police`. Les membres la retrouvent ensuite dans **Salons et rôles**, en haut de
 la liste des salons. Sur un serveur qui n'est pas communautaire, un modérateur donne le rôle à la main.
 
+## 6. Afficher les protecteurs connectés (facultatif)
+
+Les porteurs du rôle sont les protecteurs de la guilde. Le bot peut tenir, dans un salon de votre choix, un seul
+message qui liste ceux qui sont connectés :
+
+```
+Protecteurs de Votre serveur
+3 connectés sur 12
+@Untel @Unetelle @Machin
+```
+
+1. **D'abord**, onglet **Bot** du portail, *Privileged Gateway Intents* : activez **Server Members Intent** et **Presence
+   Intent**. Dans cet ordre : sans eux, Discord refuse la connexion et le bot ne démarre plus.
+2. Créez le salon. Le bot ne le crée pas. Il doit y avoir les droits Voir le salon, Envoyer des messages, Intégrer des
+   liens et Lire l'historique.
+3. Sur Discord, Paramètres, Avancés, **Mode développeur** ; puis clic droit sur le salon, **Copier l'identifiant du salon**.
+   Mettez-le dans `DISCORD_PVP_PROTECTORS_CHANNEL_ID`, et redéployez.
+
+Le journal dit alors `salon #… : voir=True … envoyer=True`, puis `protecteurs de Votre serveur : 3 connectés sur 12`. En
+`BOT_MODE=journal`, il ne publie rien.
+
+**« Connecté » veut dire en ligne sur Discord**, pas dans le jeu : le bot ne voit pas qui joue. Absent et Ne pas déranger
+comptent comme connectés ; un membre en mode invisible compte comme hors ligne, Discord ne dit pas la différence au bot.
+
+Personne n'est notifié par ces @. Le rôle est `DISCORD_PVP_ROLE_ID`, sinon celui du nom `DISCORD_PVP_ROLE_NAME`.
+
+Si les membres peuvent écrire dans ce salon, la liste s'enfonce sous leurs messages : fermez-le à l'écriture si elle doit
+rester visible. Le bot garde l'id du message dans `/app/state` pour le retrouver après un redémarrage. Sans ce volume, il
+le cherche dans les 1000 derniers messages, et en poste un autre s'il ne l'y trouve pas.
+
 ## Ce que fait le bot
 
 - **Une carte par zone.** Deux guildiens qui appellent dans la même zone partagent la carte : une ligne
@@ -207,6 +237,7 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 | `DISCORD_CHANNEL_ID` | vide | imposer le salon relié (sinon reconnu à ses messages du jeu) |
 | `DISCORD_PVP_CHANNEL_ID` | vide | imposer le salon des cartes (le bot ne sert alors qu'un serveur) |
 | `DISCORD_PVP_ROLE_ID` | vide | imposer le rôle mentionné |
+| `DISCORD_PVP_PROTECTORS_CHANNEL_ID` | vide | le salon de la liste des protecteurs connectés (étape 6) ; vide : pas de liste |
 | `BOT_SUPPRIMER` | `oui` | effacer la ligne brute du salon relié |
 | `BOT_GARDER_HEURES` | `24` | délai avant d'effacer une carte finie (`0` : jamais) |
 | `BOT_CARTES` | `oui` | `non` : cartes sans image de zone |
@@ -221,8 +252,11 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 |---|---|
 | `DISCORD_TOKEN manquant` | la variable n'arrive pas au bot : nom mal écrit, pas disponible à l'exécution, ou pas de **Redeploy** depuis. |
 | `Improper token has been passed` (401) | ce n'est pas le jeton : il est dans l'onglet **Bot**, en trois morceaux séparés par des points. Ni l'identifiant du serveur, ni l'Application ID, ni le Client Secret. Un **Reset Token** annule aussi le précédent. |
-| `PrivilegedIntentsRequired` au démarrage | Message Content Intent n'est pas activé (étape 1). |
-| `salon … INTROUVABLE` | un identifiant imposé (`DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`) que le bot ne voit pas : pas invité, ou pas le droit de voir ce salon. |
+| `Discord refuse la connexion : allumer …` | un intent n'est pas activé : Message Content Intent (étape 1) ; avec la liste des protecteurs, aussi Server Members Intent et Presence Intent (étape 6). Ou videz `DISCORD_PVP_PROTECTORS_CHANNEL_ID`. |
+| `salon … INTROUVABLE` | un identifiant imposé (`DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`, `DISCORD_PVP_PROTECTORS_CHANNEL_ID`) que le bot ne voit pas : pas invité, ou pas le droit de voir ce salon. |
+| `salon … introuvable parmi les salons texte du bot` | `DISCORD_PVP_PROTECTORS_CHANNEL_ID` n'est pas un salon texte d'un serveur du bot : recopiez l'id (étape 6). |
+| `ni DISCORD_PVP_ROLE_ID ni le rôle` | le rôle des protecteurs n'est pas sur le serveur de ce salon : réglez `DISCORD_PVP_ROLE_ID` ou `DISCORD_PVP_ROLE_NAME`. La liste déjà affichée ne bouge plus. |
+| `liste des protecteurs pas mise à jour` | Discord refuse : donnez au bot les droits de l'étape 6 dans ce salon. |
 | aucune ligne `message du jeu` après un appel | le bot ne voit pas le salon relié (ses permissions), la guilde n'est pas en chat Discord séparé, ou l'appel n'a pas atteint Discord (en jeu, « Ton appel » dit où en est l'envoi). |
 | `message du jeu` noté, mais aucune carte | `BOT_MODE` est encore à `journal`. |
 | `pas de #alertes-pvp et pas le droit de gérer les salons` | réinvitez le bot avec le lien de l'étape 2, ou créez le salon vous-même. |
@@ -245,3 +279,5 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 - Il ne contacte que Discord et [wago.tools](https://wago.tools), pour les images de zone. Aucune donnée
   de joueur ne part chez wago.tools : seulement le numéro de la zone, le jeu et la langue.
 - Aucune image du jeu n'est rangée dans ce dépôt ni dans l'image Docker.
+- Avec la liste des protecteurs seulement, il reçoit la liste des membres du serveur et leur statut en ligne. Il n'en
+  garde rien : le journal note des nombres, jamais de nom, et le fichier `protecteurs.json` ne contient que l'id du message.

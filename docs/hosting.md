@@ -36,7 +36,7 @@ pings the `pvp-police` role, then keeps the card updated until the call ends.
    - **Reset Token**, then copy the token: Discord shows it only once. It's the bot's password. It never
      goes in a message, an issue, a screenshot or a commit.
    - Under **Privileged Gateway Intents**, turn on **Message Content Intent**. Without it the bot can't
-     read the text of the in-game lines, and it refuses to start (`PrivilegedIntentsRequired`).
+     read the text of the in-game lines, and it refuses to start (`Discord refuse la connexion`).
    - Untick **Public Bot**, so only you can invite it. If Discord refuses, first set the **Installation**
      tab, *Install Link*, to *None*.
 3. **General Information** tab: note the **Application ID**.
@@ -175,6 +175,36 @@ the server's Onboarding (for example "Get pinged for PvP calls for help?") with 
 `pvp-police`. Members then find it under **Channels & Roles**, at the top of the channel list. On a
 server that isn't a Community server, a moderator hands out the role.
 
+## 6. Show the protectors who are online (optional)
+
+The role holders are the guild's protectors. In a channel of your choice, the bot can keep a single message listing
+those who are online:
+
+```
+Protectors of Your server
+3 online out of 12
+@Someone @Another @Third
+```
+
+1. **First**, in the portal's **Bot** tab, *Privileged Gateway Intents*: turn on **Server Members Intent** and **Presence
+   Intent**. In that order: without them, Discord refuses the connection and the bot won't start anymore.
+2. Create the channel. The bot doesn't create it. It needs View Channel, Send Messages, Embed Links and Read Message
+   History there.
+3. In Discord, Settings, Advanced, **Developer Mode**; then right-click the channel, **Copy Channel ID**. Put it in
+   `DISCORD_PVP_PROTECTORS_CHANNEL_ID`, and redeploy.
+
+The log then says `salon #… : voir=True … envoyer=True`, then `protecteurs de Your server : 3 connectés sur 12`. With
+`BOT_MODE=journal`, nothing is posted.
+
+**"Online" means online on Discord**, not in the game: the bot can't see who's playing. Idle and Do Not Disturb count as
+online; an invisible member counts as offline, since Discord doesn't tell the bot the difference.
+
+Nobody gets notified by these @s. The role is `DISCORD_PVP_ROLE_ID`, otherwise the one named `DISCORD_PVP_ROLE_NAME`.
+
+If members can write in that channel, the list sinks under their messages: make it read-only if the list has to stay in
+view. The bot keeps the message's id in `/app/state` to find it after a restart. Without that volume, it looks through the
+last 1000 messages, and posts a new one if it isn't there.
+
 ## What the bot does
 
 - **One card per zone.** Two guild members calling in the same zone share the card: one line and one
@@ -212,6 +242,7 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 | `DISCORD_CHANNEL_ID` | empty | force the linked channel (otherwise found by its in-game messages) |
 | `DISCORD_PVP_CHANNEL_ID` | empty | force the cards channel (the bot then serves one server only) |
 | `DISCORD_PVP_ROLE_ID` | empty | force the role to ping |
+| `DISCORD_PVP_PROTECTORS_CHANNEL_ID` | empty | the channel of the online protectors list (step 6); empty: no list |
 | `BOT_SUPPRIMER` | `oui` | delete the raw line from the linked channel |
 | `BOT_GARDER_HEURES` | `24` | hours before a finished card is deleted (`0`: never) |
 | `BOT_CARTES` | `oui` | `non`: cards without a zone map |
@@ -226,8 +257,11 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 |---|---|
 | `DISCORD_TOKEN manquant` ("missing") | the variable doesn't reach the bot: misspelled name, not available at runtime, or no **Redeploy** since. |
 | `Improper token has been passed` (401) | that isn't the token: it's in the **Bot** tab, in three parts separated by dots. Not the server ID, the Application ID or the Client Secret. A **Reset Token** also cancels the previous one. |
-| `PrivilegedIntentsRequired` on start | Message Content Intent isn't on (step 1). |
-| `salon … INTROUVABLE` | a forced id (`DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`) the bot can't see: not invited, or not allowed to view that channel. |
+| `Discord refuse la connexion : allumer …` ("Discord refuses the connection: turn on …") | an intent is off: Message Content Intent (step 1); with the protectors list, also Server Members Intent and Presence Intent (step 6). Or empty `DISCORD_PVP_PROTECTORS_CHANNEL_ID`. |
+| `salon … INTROUVABLE` | a forced id (`DISCORD_CHANNEL_ID`, `DISCORD_PVP_CHANNEL_ID`, `DISCORD_PVP_PROTECTORS_CHANNEL_ID`) the bot can't see: not invited, or not allowed to view that channel. |
+| `salon … introuvable parmi les salons texte du bot` ("not among the bot's text channels") | `DISCORD_PVP_PROTECTORS_CHANNEL_ID` isn't a text channel on one of the bot's servers: copy the id again (step 6). |
+| `ni DISCORD_PVP_ROLE_ID ni le rôle` ("neither … nor the role") | the protectors role isn't on that channel's server: set `DISCORD_PVP_ROLE_ID` or `DISCORD_PVP_ROLE_NAME`. The list already shown stops changing. |
+| `liste des protecteurs pas mise à jour` ("protectors list not updated") | Discord refuses: give the bot the step 6 permissions in that channel. |
 | no `message du jeu` line after a call | the bot can't see the linked channel (its permissions), the guild doesn't keep Discord chat separate, or the call didn't reach Discord (in game, "Ton appel" shows how the sending went). |
 | `message du jeu` logged, but no card | `BOT_MODE` is still `journal`. |
 | `pas de #alertes-pvp et pas le droit de gérer les salons` ("no #alertes-pvp and no right to manage channels") | invite the bot again with the step 2 link, or create the channel yourself. |
@@ -250,3 +284,5 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 - It only talks to Discord and [wago.tools](https://wago.tools), for the zone maps. No player data goes
   to wago.tools: only the zone number, the game and the language.
 - No game image is stored in this repository or in the Docker image.
+- Only with the protectors list, it receives the server's member list and their online status. It keeps none of it: the
+  log holds numbers, never a name, and the `protecteurs.json` file holds only the message's id.

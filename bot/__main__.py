@@ -18,6 +18,7 @@ from . import config as cfg
 from . import labels
 from .game import is_from_game
 from .map_store import MapStore
+from .protectors import Protectors
 from .pvp import PvpRelay
 from .pvp_line import parse
 
@@ -33,6 +34,16 @@ def invite_link(application_id: int) -> str:
     """Le lien d'invitation : la portée `bot` seule (aucune commande slash) et les droits ci-dessus. Le guide
     d'hébergement (docs/hebergement.md, docs/hosting.md) en recopie l'entier des droits."""
     return discord.utils.oauth_url(application_id, permissions=PERMISSIONS, scopes=("bot",))
+
+
+def make_intents(protectors: bool = False) -> discord.Intents:
+    """Le texte des lignes du jeu, et, pour la liste des protecteurs seulement, les membres et leur présence. Ces
+    intents sont PRIVILÉGIÉS : à allumer sur le portail, sinon la connexion est refusée. Un bot sans cette liste ne
+    doit rien avoir à changer en se mettant à jour."""
+    intents = discord.Intents.default()
+    intents.message_content = True
+    intents.members = intents.presences = protectors
+    return intents
 
 
 def setup_logging(log_file) -> logging.Logger:
@@ -82,12 +93,17 @@ def main() -> None:
     labels.use(conf.language)      # la langue des cartes, une fois pour tout le bot (A5)
     conf.state_dir.mkdir(parents=True, exist_ok=True)
     log = setup_logging(conf.log_file)
-    intents = discord.Intents.default()
-    intents.message_content = True
-    client = discord.Client(intents=intents)
+    client = discord.Client(intents=make_intents(bool(conf.protectors_channel_id)))
     maps = MapStore(conf.state_dir / "cartes", conf.maps_product, conf.maps_locale, log=log) if conf.maps else {}
     pvp = PvpRelay(client, conf, log, maps=maps)
+    protectors = Protectors(client, conf, log)
+    protectors.listen()
     started: set[asyncio.Task] = set()
+
+    def launch(work) -> None:
+        task = asyncio.create_task(work)
+        started.add(task)
+        task.add_done_callback(started.discard)
 
     @client.event
     async def on_ready() -> None:
@@ -97,15 +113,15 @@ def main() -> None:
         log.info("cartes de zone : %s", f"wago.tools, {conf.maps_product}, {conf.maps_locale}, {len(maps)} en cache"
                  if conf.maps else "éteintes (BOT_CARTES=non)")
         log.info("lien d'invitation du bot : %s", invite_link(client.application_id))
-        for channel_id in (conf.channel_id, conf.pvp_channel_id):
+        for channel_id in (conf.channel_id, conf.pvp_channel_id, conf.protectors_channel_id):
             if channel_id:
                 diagnose(client, channel_id, log)
+        if protectors.enabled:
+            launch(protectors.refresh())
         if not pvp.enabled:
             log.warning("ni DISCORD_PVP_CHANNEL_ID ni BOT_INSTALLER=oui : aucune carte d'appel ne sera faite")
         elif conf.mode == "repondre":   # installation, cartes en cours reprises, lignes ratées rattrapées
-            task = asyncio.create_task(pvp.start())
-            started.add(task)
-            task.add_done_callback(started.discard)
+            launch(pvp.start())
 
     @client.event
     async def on_message(message: discord.Message) -> None:
@@ -119,7 +135,14 @@ def main() -> None:
         if conf.mode == "repondre":
             await pvp.handle(message)
 
-    client.run(conf.token, log_handler=None)
+    try:
+        client.run(conf.token, log_handler=None)
+    except discord.PrivilegedIntentsRequired:
+        needed = ("« Message Content Intent », « Server Members Intent » et « Presence Intent »"
+                  if conf.protectors_channel_id else "« Message Content Intent »")
+        log.error("Discord refuse la connexion : allumer %s sur le portail "
+                  "(discord.com/developers/applications → l'application → Bot → Privileged Gateway Intents).", needed)
+        raise SystemExit(1) from None
 
 
 if __name__ == "__main__":

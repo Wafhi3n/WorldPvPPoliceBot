@@ -424,9 +424,12 @@ class PvpRelay:
         since = dt.datetime.fromtimestamp(self.now() - EXPIRY, tz=dt.timezone.utc)
         caught = 0
         for source in self._sources(guild, server):
-            async for message in source.history(limit=HISTORY, after=since, oldest_first=True):
-                if await self.handle(message, live=False):
-                    caught += 1
+            try:
+                async for message in source.history(limit=HISTORY, after=since, oldest_first=True):
+                    if await self.handle(message, live=False):
+                        caught += 1
+            except discord.DiscordException as err:     # un salon refusé n'arrête ni les autres, ni le démarrage
+                self.log.warning("salon #%s pas relu pour le rattrapage : %s", getattr(source, "name", "?"), err)
         if caught:
             self.log.info("rattrapage : %d ligne(s) d'appel ratée(s) pendant l'arrêt, reprise(s)", caught)
         return caught
@@ -443,8 +446,11 @@ class PvpRelay:
             guilds = [g for g in [home, *posted] if g is not None] or [None]
             guilds = list({getattr(g, "id", None): g for g in guilds}.values())
         for guild in guilds:
-            async with self.lock:
-                server = await self._server(guild)
-            if server is not None:
-                await self.catch_up(None if guild is home and guild not in posted else guild, server)
+            try:
+                async with self.lock:
+                    server = await self._server(guild)
+                if server is not None:
+                    await self.catch_up(None if guild is home and guild not in posted else guild, server)
+            except discord.DiscordException as err:     # un serveur refusé n'empêche pas les autres, ni le nettoyage
+                self.log.warning("démarrage de %s incomplet : %s", getattr(guild, "name", "ce serveur"), err)
         self._start_cleaning()

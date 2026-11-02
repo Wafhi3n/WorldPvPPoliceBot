@@ -142,6 +142,47 @@ class VariableAsToday(Base):
         asyncio.run(self.relay.start())
         self.assertEqual((self.guild.created, other.read), ([], 0), "sans DISCORD_CHANNEL_ID, pas de rattrapage : comme avant")
 
+    def refused(self, channel_id):
+        """Le journal du 2026-11-02 22:40 : DISCORD_CHANNEL_ID sur un salon que le bot ne voit plus."""
+        linked = channel(channel_id, self.guild, "le-canal-de-guilde")
+
+        def history(*_a, **_k):
+            async def gen():
+                raise discord.Forbidden(SimpleNamespace(status=403, reason="Forbidden"), "Missing Access")
+                yield
+            return gen()
+        linked.history = history
+        return linked
+
+    def test_un_salon_relie_refuse_n_arrete_pas_le_demarrage(self):
+        linked = self.refused(903)
+        config = conf(pvp_channel_id=900, pvp_role_id=55, channel_id=903)
+        warnings = []
+        relay = relay_of(config, Settings(config), [self.guild], [self.alerts, linked])
+        relay.log = SimpleNamespace(info=lambda *a: None, warning=lambda *a: warnings.append(a))
+
+        async def go():
+            await relay.start()
+            self.assertIsNotNone(relay.cleaning, "sinon les cartes finies ne s'effacent plus jamais")
+            relay.cleaning.cancel()
+        asyncio.run(go())
+        self.assertEqual(warnings[0][1], "le-canal-de-guilde")
+        self.assertIn(GUILD, relay.servers, "les cartes marchent quand même")
+
+    def test_un_salon_des_cartes_refuse_n_arrete_pas_le_nettoyage(self):
+        def history(*_a, **_k):
+            async def gen():
+                raise discord.Forbidden(SimpleNamespace(status=403, reason="Forbidden"), "Missing Access")
+                yield
+            return gen()
+        self.alerts.history = history
+
+        async def go():
+            await self.relay.start()
+            self.assertIsNotNone(self.relay.cleaning)
+            self.relay.cleaning.cancel()
+        asyncio.run(go())
+
     def test_un_message_sans_serveur_connu_garde_le_salon_de_la_variable(self):
         asyncio.run(self.relay.handle(Raw(SOS1)))
         self.assertEqual(len(self.alerts.sent), 1)
@@ -430,6 +471,20 @@ class Group(Base):
         answer = self.call(self.group.show).reply
         for wanted in ("**À régler**", "`/setup salon-alertes`", "`/setup role`", "`/setup categorie-guide`", "LIEN"):
             self.assertIn(wanted, answer)
+
+    def test_voir_dit_que_le_salon_relie_refuse_le_bot(self):
+        linked = channel(903, name="le-canal-de-guilde")
+        linked.permissions_for = lambda _m: SimpleNamespace(view_channel=False, read_message_history=False, manage_messages=False)
+        self.guild.text_channels.append(linked)
+        self.settings.conf.channel_id = 903
+        answer = self.call(self.group.show).reply
+        self.assertIn("**À régler**", answer)
+        self.assertIn("aucun appel n'arrive", answer)
+
+    def test_voir_dit_que_le_salon_des_cartes_refuse_d_ecrire(self):
+        self.settings.conf.pvp_channel_id = 900
+        self.alerts.permissions_for = lambda _m: SimpleNamespace(**{**vars(ALL), "send_messages": False})
+        self.assertIn("envoyer des messages", self.call(self.group.show).reply)
 
     def test_une_variable_d_un_autre_serveur_n_est_pas_a_regler_ici(self):
         self.settings.conf.pvp_channel_id = 123

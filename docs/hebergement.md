@@ -264,6 +264,7 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 | `pas de #alertes-pvp et pas le droit de gérer les salons` | réinvitez le bot avec le lien de l'étape 2, ou créez le salon vous-même. |
 | `rôle pvp-police pas mentionnable, et le bot ne peut pas y toucher` | rendez le rôle mentionnable, ou glissez le rôle du bot au-dessus. |
 | `suppression refusée`, la ligne brute reste | Gérer les messages manque au bot sur le salon relié. |
+| `salon … pas relu pour le rattrapage` | le bot ne peut pas relire ce salon : les appels ratés pendant l'arrêt n'auront pas de carte. S'il s'agit du salon relié, il faut Voir le salon et Lire l'historique, sinon aucun appel n'arrive (`/setup voir`). |
 | `carte de zone … pas téléchargée` | wago.tools injoignable : la carte part sans image, nouvel essai 10 minutes plus tard. `BOT_CARTES=non` pour s'en passer. |
 
 ## Régler le bot depuis Discord : `/setup`

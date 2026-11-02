@@ -22,6 +22,7 @@ from .settings import FROM_ENV, Settings
 NO_MENTION = discord.AllowedMentions.none()
 ALERTS_RIGHTS = ("view_channel", "send_messages", "embed_links", "attach_files", "read_message_history")
 GUIDE_RIGHTS = ("view_channel", "manage_channels", "send_messages", "read_message_history")
+LINKED_RIGHTS = ("view_channel", "read_message_history", "manage_messages")
 CHOICES = [app_commands.Choice(name=LANGS["fr"]["setup"]["names"][field], value=field) for field in FROM_ENV]
 SHOWN = {"pvp_channel": "<#{}>", "pvp_role": "<@&{}>", "guide_category": "<#{}>"}
 
@@ -140,6 +141,15 @@ class SetupGroup(app_commands.Group):
         rights = channel.permissions_for(guild.me)
         return [] if all(getattr(rights, right) for right in ALERTS_RIGHTS) else [labels["channel_rights"].format(channel=channel.mention)]
 
+    def _linked_problems(self, guild) -> list[str]:
+        """Le salon relié imposé : s'il refuse le bot, aucune ligne du jeu n'arrive, et rien d'autre ne le dit sur Discord."""
+        wanted = getattr(self.settings.conf, "channel_id", None)
+        channel = next((c for c in guild.text_channels if c.id == wanted), None)
+        if channel is None:
+            return []
+        rights = channel.permissions_for(guild.me)
+        return [] if all(getattr(rights, right) for right in LINKED_RIGHTS) else [text()["setup"]["linked_rights"].format(channel=channel.mention)]
+
     def _role_problems(self, guild) -> list[str]:
         labels = text()["setup"]
         role_id = self.settings.get(guild.id, "pvp_role")
@@ -175,7 +185,8 @@ class SetupGroup(app_commands.Group):
                  labels["protectors"] + labels["separator"]
                  + (f"<#{protectors}> ({labels['origins']['variable']})" if protectors else labels["unset"]),
                  labels["mode"].format(mode=conf.mode)]
-        problems = [*self._channel_problems(guild), *self._role_problems(guild), *self._guide_problems(guild)]
+        problems = [*self._linked_problems(guild), *self._channel_problems(guild), *self._role_problems(guild),
+                    *self._guide_problems(guild)]
         if problems:
             lines += ["", labels["to_fix"], *(f"- {problem}" for problem in problems), "", labels["invite"].format(link=self.link())]
         return "\n".join(lines)

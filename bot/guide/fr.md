@@ -38,4 +38,4 @@ Si son salon est réglé, le bot y tient un seul message : les porteurs du rôle
 
 ## Si rien n'arrive
 
-Une ligne d'appel qui n'apparaît pas dans le salon relié ne vient pas du bot : regarde « Ton appel » dans l'addon. Si elle apparaît sans carte : le bot est en `journal`, ou il n'a pas ses droits dans le salon des alertes. Son journal le dit.
+Une ligne d'appel qui n'apparaît pas dans le salon relié ne vient pas du bot : regarde « Ton appel » dans l'addon. Si elle apparaît sans carte : le bot est en `journal`, ou il n'a pas ses droits dans le salon relié ou celui des alertes. `/setup voir` et son journal le disent.

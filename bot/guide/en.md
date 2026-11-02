@@ -38,4 +38,4 @@ If its channel is set, the bot keeps a single message there: the role holders wh
 
 ## If nothing arrives
 
-A call line that doesn't show up in the linked channel doesn't come from the bot: check "Ton appel" in the addon. If it shows up without a card: the bot is in `journal`, or lacks its permissions in the alerts channel. Its log says so.
+A call line that doesn't show up in the linked channel doesn't come from the bot: check "Ton appel" in the addon. If it shows up without a card: the bot is in `journal`, or lacks its permissions in the linked channel or the alerts channel. `/setup voir` and its log say so.

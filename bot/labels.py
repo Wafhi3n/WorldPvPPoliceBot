@@ -56,6 +56,8 @@ LANGS = {
             "channel_gone": "Le salon des cartes n'est plus sur ce serveur : `/setup salon-alertes`.",
             "channel_rights": "Il manque au bot dans {channel} : voir le salon, envoyer des messages, intégrer des liens, joindre "
                               "des fichiers ou lire l'historique.",
+            "linked_rights": "Il manque au bot dans le salon relié {channel} : voir le salon, lire l'historique ou gérer les "
+                             "messages. Sans les deux premiers, aucun appel n'arrive jusqu'au bot.",
             "role_gone": "Le rôle mentionné n'est plus sur ce serveur : `/setup role`.",
             "role_quiet": "{role} n'est pas mentionnable : la mention ne sonnera pas. Le rendre mentionnable dans Paramètres du "
                           "serveur → Rôles.",
@@ -109,6 +111,8 @@ LANGS = {
             "channel_gone": "The cards channel is no longer on this server: `/setup salon-alertes`.",
             "channel_rights": "In {channel} the bot lacks: View Channel, Send Messages, Embed Links, Attach Files or Read Message "
                               "History.",
+            "linked_rights": "In the linked channel {channel} the bot lacks: View Channel, Read Message History or Manage Messages. "
+                             "Without the first two, no call reaches the bot.",
             "role_gone": "The role to ping is no longer on this server: `/setup role`.",
             "role_quiet": "{role} isn't mentionable: the ping won't ring. Make it mentionable in Server Settings, Roles.",
             "category_gone": "The guide category is no longer on this server: `/setup categorie-guide`.",

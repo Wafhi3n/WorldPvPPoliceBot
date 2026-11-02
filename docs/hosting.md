@@ -269,6 +269,7 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 | `pas de #alertes-pvp et pas le droit de gérer les salons` ("no #alertes-pvp and no right to manage channels") | invite the bot again with the step 2 link, or create the channel yourself. |
 | `rôle pvp-police pas mentionnable, et le bot ne peut pas y toucher` ("role not mentionable, and the bot can't touch it") | make the role mentionable, or drag the bot's role above it. |
 | `suppression refusée` ("deletion refused"), the raw line stays | the bot lacks Manage Messages on the linked channel. |
+| `salon … pas relu pour le rattrapage` ("not read for catch-up") | the bot can't read that channel: calls missed during the stop get no card. If it's the linked channel, it needs View Channel and Read Message History, or no call arrives (`/setup voir`). |
 | `carte de zone … pas téléchargée` ("zone map not downloaded") | wago.tools unreachable: the card goes out without a map, retried 10 minutes later. `BOT_CARTES=non` to do without. |
 
 ## Set up the bot from Discord: `/setup`

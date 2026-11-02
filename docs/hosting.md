@@ -243,6 +243,7 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 | `DISCORD_PVP_CHANNEL_ID` | empty | force the cards channel (the bot then serves one server only) |
 | `DISCORD_PVP_ROLE_ID` | empty | force the role to ping |
 | `DISCORD_PVP_PROTECTORS_CHANNEL_ID` | empty | the channel of the online protectors list (step 6); empty: no list |
+| `DISCORD_GUIDE_CATEGORY_ID` | empty | the category where the guide for administrators is posted (below); empty: no guide |
 | `BOT_SUPPRIMER` | `oui` | delete the raw line from the linked channel |
 | `BOT_GARDER_HEURES` | `24` | hours before a finished card is deleted (`0`: never) |
 | `BOT_CARTES` | `oui` | `non`: cards without a zone map |
@@ -269,9 +270,20 @@ All optional except the token. In `.env`, or as environment variables (Coolify, 
 | `suppression refusée` ("deletion refused"), the raw line stays | the bot lacks Manage Messages on the linked channel. |
 | `carte de zone … pas téléchargée` ("zone map not downloaded") | wago.tools unreachable: the card goes out without a map, retried 10 minutes later. `BOT_CARTES=non` to do without. |
 
+## Post a guide for administrators (optional)
+
+On every start, the bot can post a guide to how it works in a `world-pvp-police` channel, in the `BOT_LANGUE` language. Its messages
+are edited, not doubled, and it touches no other message.
+
+1. Create a category, and choose who sees it: the bot sets no permissions.
+2. In that category, give the bot: View Channels, Manage Channels, Send Messages, Read Message History.
+3. Right-click the category, **Copy Channel ID** (Developer Mode), and put that id alone in `DISCORD_GUIDE_CATEGORY_ID`. It needs
+   `BOT_MODE=repondre`.
+
 ## Updating
 
-- **Coolify**: *Redeploy*.
+- **Coolify**: *Redeploy*. Or, from a PC that can reach Coolify: `python tools/deploy.py`, which checks `main`, runs the tests, pushes
+  and redeploys. It reads `.deploy.env` (template `.deploy.env.example`), with a token limited to `read` and `deploy`.
 - **Docker**: `git pull`, `docker build -t worldpvppolicebot .`, then `docker rm -f worldpvppolicebot` and
   the `docker run` command.
 - **PC**: `git pull`, `pip install -r requirements.txt` in the `.venv`, and start it again.

@@ -17,6 +17,7 @@ import discord
 from . import config as cfg
 from . import labels
 from .game import is_from_game
+from .guide import Guide
 from .map_store import MapStore
 from .protectors import Protectors
 from .pvp import PvpRelay
@@ -98,6 +99,7 @@ def main() -> None:
     pvp = PvpRelay(client, conf, log, maps=maps)
     protectors = Protectors(client, conf, log)
     protectors.listen()
+    guide = Guide(client, conf, log)
     started: set[asyncio.Task] = set()
 
     def launch(work) -> None:
@@ -118,6 +120,8 @@ def main() -> None:
                 diagnose(client, channel_id, log)
         if protectors.enabled:
             launch(protectors.refresh())
+        if guide.enabled:
+            launch(guide.publish())
         if not pvp.enabled:
             log.warning("ni DISCORD_PVP_CHANNEL_ID ni BOT_INSTALLER=oui : aucune carte d'appel ne sera faite")
         elif conf.mode == "repondre":   # installation, cartes en cours reprises, lignes ratées rattrapées

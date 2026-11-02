@@ -238,6 +238,7 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 | `DISCORD_PVP_CHANNEL_ID` | vide | imposer le salon des cartes (le bot ne sert alors qu'un serveur) |
 | `DISCORD_PVP_ROLE_ID` | vide | imposer le rôle mentionné |
 | `DISCORD_PVP_PROTECTORS_CHANNEL_ID` | vide | le salon de la liste des protecteurs connectés (étape 6) ; vide : pas de liste |
+| `DISCORD_GUIDE_CATEGORY_ID` | vide | la catégorie où publier le guide pour les administrateurs (ci-dessous) ; vide : pas de guide |
 | `BOT_SUPPRIMER` | `oui` | effacer la ligne brute du salon relié |
 | `BOT_GARDER_HEURES` | `24` | délai avant d'effacer une carte finie (`0` : jamais) |
 | `BOT_CARTES` | `oui` | `non` : cartes sans image de zone |
@@ -264,9 +265,20 @@ Tous facultatifs sauf le jeton. Dans `.env`, ou dans les variables d'environneme
 | `suppression refusée`, la ligne brute reste | Gérer les messages manque au bot sur le salon relié. |
 | `carte de zone … pas téléchargée` | wago.tools injoignable : la carte part sans image, nouvel essai 10 minutes plus tard. `BOT_CARTES=non` pour s'en passer. |
 
+## Publier un guide pour les administrateurs (facultatif)
+
+À chaque démarrage, le bot peut publier un guide de son fonctionnement dans un salon `world-pvp-police`, dans la langue de
+`BOT_LANGUE`. Ses messages sont modifiés, pas doublés, et il ne touche à aucun autre message.
+
+1. Créez une catégorie, et choisissez qui la voit : le bot ne règle aucun droit.
+2. Dans cette catégorie, donnez au bot : voir les salons, gérer les salons, envoyer des messages, lire l'historique.
+3. Clic droit sur la catégorie, **Copier l'identifiant** (Mode développeur), et mettez cet id seul dans
+   `DISCORD_GUIDE_CATEGORY_ID`. Il faut `BOT_MODE=repondre`.
+
 ## Mettre à jour
 
-- **Coolify** : *Redeploy*.
+- **Coolify** : *Redeploy*. Ou, depuis un PC qui joint Coolify : `python tools/deploy.py`, qui vérifie `main`, lance les tests, pousse et
+  redéploie. Il lit `.deploy.env` (modèle `.deploy.env.example`), avec un jeton limité à `read` et `deploy`.
 - **Docker** : `git pull`, `docker build -t worldpvppolicebot .`, puis `docker rm -f worldpvppolicebot`
   et la commande `docker run`.
 - **PC** : `git pull`, `pip install -r requirements.txt` dans le `.venv`, et relancez.

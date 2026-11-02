@@ -1,6 +1,15 @@
 # World PvP Police Bot
 
-When a guild member calls for help from the game, with the World PvP Police Guild addon, the bot turns it into a card on Discord. It has no commands: everything is set where it's hosted.
+When a guild member calls for help from the game, with the World PvP Police Guild addon, the bot turns it into a card on Discord.
+
+## Setting up the bot: `/setup`
+
+Administrators only. If several bots offer `/setup`, Discord shows the name of each: pick World PvP Police's. Start with `/setup voir`: it shows each setting and what's missing.
+
+- `/setup salon-alertes`: the cards channel
+- `/setup role`: the role pinged on each new card, and listed as protectors
+- `/setup categorie-guide`: the category where this guide is posted
+- `/setup effacer`: forgets a setting made here, and goes back to the one where it's hosted
 
 ## The call card
 
@@ -24,10 +33,8 @@ If its channel is set, the bot keeps a single message there: the role holders wh
 ## Settings where it's hosted
 
 - `BOT_MODE`: `journal` logs and does nothing, `repondre` makes the cards
-- `DISCORD_PVP_CHANNEL_ID`: the cards channel
-- `DISCORD_PVP_ROLE_ID`: the role to ping
 - `DISCORD_PVP_PROTECTORS_CHANNEL_ID`: the protectors list channel; turn on Server Members Intent and Presence Intent on the Discord portal before setting it
-- `DISCORD_GUIDE_CATEGORY_ID`: the category where the bot posts this guide, updated on every deployment
+- `DISCORD_PVP_CHANNEL_ID`, `DISCORD_PVP_ROLE_ID`, `DISCORD_GUIDE_CATEGORY_ID`: the same settings as `/setup`, which wins over them
 
 ## If nothing arrives
 

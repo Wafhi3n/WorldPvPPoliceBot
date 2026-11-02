@@ -16,6 +16,7 @@ import discord
 
 from .install import find_role
 from .labels import LANGS, text
+from .settings import Settings
 
 DELAY = 5               # secondes entre le premier changement et l'écriture
 HISTORY = 1000          # messages relus dans le salon pour y retrouver la liste, si l'id gardé ne sert pas
@@ -57,8 +58,9 @@ def same(message, card: discord.Embed) -> bool:
 
 
 class Protectors:
-    def __init__(self, client, conf, log: logging.Logger, delay: float = DELAY):
+    def __init__(self, client, conf, log: logging.Logger, delay: float = DELAY, settings: Settings | None = None):
         self.client, self.conf, self.log, self.delay = client, conf, log, delay
+        self.settings = settings or Settings(conf)
         self.path = conf.state_dir / "protecteurs.json"
         self.message = None
         self.lock = asyncio.Lock()
@@ -75,7 +77,8 @@ class Protectors:
         return next((c for g in self.client.guilds for c in g.text_channels if c.id == wanted), None) if wanted else None
 
     def _role(self, guild):
-        role = guild.get_role(self.conf.pvp_role_id) if self.conf.pvp_role_id else None
+        role_id = self.settings.get(guild.id, "pvp_role")     # le même rôle que les cartes
+        role = guild.get_role(role_id) if role_id else None
         return role or find_role(guild, self.conf.pvp_role_name)
 
     # ===== Quand =====

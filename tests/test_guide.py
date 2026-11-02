@@ -9,10 +9,13 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import discord
+from discord import app_commands
 
 from bot.config import Config
 from bot.guide import CHANNEL, MAX_MESSAGE, Guide, load, split
 from bot.labels import LANGS
+from bot.settings import Settings
+from bot.setup_commands import SetupGroup
 
 BOT, OTHER, CATEGORY = SimpleNamespace(id=1), SimpleNamespace(id=2), 700
 ALL = SimpleNamespace(view_channel=True, manage_channels=True, send_messages=True, read_message_history=True)
@@ -57,6 +60,7 @@ class Category:
 
 class Guild:
     def __init__(self):
+        self.id, self.name = 500, "Ost"
         self.me, self.created, self.categories = SimpleNamespace(id=1), [], []
 
     async def create_text_channel(self, name, category=None, reason=None):
@@ -177,6 +181,15 @@ class RealGuide(unittest.TestCase):
         for language in LANGS:
             for name in re.findall(r"(?:BOT|DISCORD)_[A-Z_]+", "\n".join(load(language))):
                 self.assertIn(name, known, f"{name} : à corriger dans bot/guide/{language}.md")
+
+    def test_chaque_commande_est_dans_le_guide_et_le_guide_ne_cite_qu_elles(self):
+        client = discord.Client(intents=discord.Intents.none())
+        tree = app_commands.CommandTree(client)
+        tree.add_command(SetupGroup(Settings(Config(token="x")), None, None, None, SimpleNamespace()))
+        names = {command.name for command in tree.get_commands()[0].commands}
+        for language in LANGS:
+            found = set(re.findall(r"/setup ([a-z-]+)", "\n".join(load(language))))
+            self.assertEqual(found, names, f"à corriger dans bot/guide/{language}.md")
 
     def test_les_deux_langues_citent_les_memes_reglages(self):
         names = [set(re.findall(r"(?:BOT|DISCORD)_[A-Z_]+", "\n".join(load(language)))) for language in LANGS]

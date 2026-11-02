@@ -2,7 +2,8 @@
 salon de la catégorie réglée. Un changement du bot et de son guide part donc au même déploiement. Ses messages sont modifiés, pas
 doublés, et il ne touche jamais à un message qui n'est pas le sien.
 
-Éteint sans `DISCORD_GUIDE_CATEGORY_ID`. La catégorie, et qui la voit, restent à l'admin : le bot n'y pose aucun droit.
+Éteint sans `/setup categorie-guide` ni `DISCORD_GUIDE_CATEGORY_ID`. La catégorie, et qui la voit, restent à l'admin : le bot n'y
+pose aucun droit.
 """
 
 from __future__ import annotations
@@ -11,6 +12,8 @@ import logging
 from pathlib import Path
 
 import discord
+
+from .settings import Settings
 
 FOLDER = Path(__file__).resolve().parent / "guide"
 CHANNEL = "world-pvp-police"
@@ -54,38 +57,51 @@ def load(language: str, folder: Path = FOLDER) -> list[str]:
 
 
 class Guide:
-    def __init__(self, client, conf, log: logging.Logger, folder: Path = FOLDER):
+    def __init__(self, client, conf, log: logging.Logger, folder: Path = FOLDER, settings: Settings | None = None):
         self.client, self.conf, self.log, self.folder = client, conf, log, folder
+        self.settings = settings or Settings(conf)
 
     @property
-    def enabled(self) -> bool:
-        return bool(self.conf.guide_category_id)
+    def active(self) -> bool:
+        return self.conf.mode == "repondre"
 
-    def _category(self):
-        wanted = self.conf.guide_category_id
-        return next((c for g in self.client.guilds for c in g.categories if c.id == wanted), None)
+    def category(self, guild):
+        """La catégorie de ce serveur : une variable vaut pour tous les serveurs, et n'en désigne qu'un."""
+        wanted = self.settings.get(guild.id, "guide_category")
+        return next((c for c in guild.categories if c.id == wanted), None)
 
     async def publish(self) -> None:
-        """Le guide à jour. Rien ne l'empêche de rester faux en silence : le journal le dit, et les cartes n'en dépendent pas."""
-        if not self.enabled or self.conf.mode != "repondre":
+        """Au démarrage, le guide à jour sur chaque serveur réglé. Le journal dit ce qui l'empêche ; les cartes n'en dépendent pas."""
+        if not self.active:
             return
-        category = self._category()
+        wanted = self.settings.env("guide_category")
+        guilds = self.client.guilds
+        if wanted is not None and not any(c.id == wanted for g in guilds for c in g.categories):
+            self.log.warning("guide : la catégorie %s n'est sur aucun serveur du bot (DISCORD_GUIDE_CATEGORY_ID)", wanted)
+        for guild in guilds:
+            if self.category(guild) is not None or self.settings.stored(guild.id, "guide_category") is not None:
+                await self.publish_in(guild)
+
+    async def publish_in(self, guild) -> str | None:
+        """Le guide à jour sur ce serveur ; rend ce qui l'empêche (`gone`, `rights`, `failed`), ou None."""
+        category = self.category(guild)
         if category is None:
-            self.log.warning("guide : la catégorie %s n'est sur aucun serveur du bot (DISCORD_GUIDE_CATEGORY_ID)",
-                             self.conf.guide_category_id)
-            return
-        rights = category.permissions_for(category.guild.me)
+            self.log.warning("guide sur %s : la catégorie réglée n'existe plus (/setup categorie-guide)", guild.name)
+            return "gone"
+        rights = category.permissions_for(guild.me)
         if not all(getattr(rights, right) for right in RIGHTS):
             self.log.warning("guide : il manque au bot, dans la catégorie %s : voir les salons, gérer les salons, envoyer des "
                              "messages ou lire l'historique", category.name)
-            return
+            return "rights"
         try:
             channel = next((c for c in category.text_channels if c.name == CHANNEL), None)
             if channel is None:
-                channel = await category.guild.create_text_channel(CHANNEL, category=category, reason=REASON)
+                channel = await guild.create_text_channel(CHANNEL, category=category, reason=REASON)
             await self._post(channel, load(self.conf.language, self.folder))
         except discord.DiscordException as err:
             self.log.warning("guide pas mis à jour : %s", err)
+            return "failed"
+        return None
 
     async def _post(self, channel, chunks: list[str]) -> None:
         mine = [message async for message in channel.history(limit=HISTORY, oldest_first=True)

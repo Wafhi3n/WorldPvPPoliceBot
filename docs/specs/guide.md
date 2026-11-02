@@ -8,13 +8,12 @@ Les admins lisent sur Discord comment marche le bot. Un texte rangé ailleurs qu
 
 ## Ce qu'on veut
 
-- **À chaque démarrage, le bot publie son guide** dans un salon de la catégorie réglée (`DISCORD_GUIDE_CATEGORY_ID`) : le code et son texte partent au même déploiement.
+- **À chaque démarrage, le bot publie son guide** dans un salon de la catégorie réglée (`/setup categorie-guide`, voir `reglages.md`, ou `DISCORD_GUIDE_CATEGORY_ID`) : le code et son texte partent au même déploiement.
 - **`tools/deploy.py`, depuis le PC** : vérifie `main`, lance les tests, pousse, demande à Coolify de reconstruire, attend la fin.
 
 ## Ce qu'on ne fait PAS
 
 - **Créer la catégorie ou régler ses droits** : c'est à l'admin. Un bot n'a pas à ouvrir ni fermer une catégorie, ce dépôt étant hébergé par d'autres guildes.
-- **Une commande** : ce bot n'en a aucune.
 - **Une pipeline sur GitHub** : GitHub ne joint pas le Coolify du user, dont le port est fermé vers Internet.
 
 ## Cas particuliers

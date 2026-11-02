@@ -101,10 +101,19 @@ class PvpRelay:
     def enabled(self) -> bool:
         return self.configured or bool(getattr(self.conf, "install", False)) or self.settings.any_stored("pvp_channel")
 
-    def _role_id(self, guild) -> int | None:
-        """Le rôle à mentionner : réglé par `/setup`, sinon par la variable, sinon trouvé par son nom, jamais créé ici."""
+    def _known_role(self, guild) -> int | None:
+        """Le rôle réglé pour ce serveur : par `/setup`, sinon par la variable si ce rôle est ici. Celui d'un autre serveur
+        ferait une mention morte : personne ne sonnerait."""
         gid = getattr(guild, "id", None)
-        role_id = self.settings.get(gid, "pvp_role")
+        posted = self.settings.stored(gid, "pvp_role")
+        if posted is not None:
+            return posted
+        variable = self.settings.env("pvp_role")
+        return variable if guild is None or any(role.id == variable for role in guild.roles) else None
+
+    def _role_id(self, guild) -> int | None:
+        """Le rôle à mentionner : le rôle réglé, sinon trouvé par son nom, jamais créé ici."""
+        role_id = self._known_role(guild)
         if role_id is not None or guild is None:
             return role_id
         role = find_role(guild, getattr(self.conf, "pvp_role_name", "pvp-police"))
@@ -126,8 +135,7 @@ class PvpRelay:
                 return Server(gid, channel, self._role_id(guild))
         if guild is None or not getattr(self.conf, "install", False):
             return None
-        return await install(guild, self.conf.pvp_channel_name, self.conf.pvp_role_name, self.log,
-                             self.settings.get(gid, "pvp_role"))
+        return await install(guild, self.conf.pvp_channel_name, self.conf.pvp_role_name, self.log, self._known_role(guild))
 
     async def moved(self, guild) -> None:
         """Un réglage de ce serveur vient de changer par `/setup` : la ligne suivante le relit, et relit ce nouveau salon. Les

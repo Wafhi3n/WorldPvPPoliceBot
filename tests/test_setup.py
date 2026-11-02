@@ -119,7 +119,7 @@ class VariableAsToday(Base):
 
     def setUp(self):
         super().setUp()
-        self.guild = FakeGuild(GUILD, "Ost")
+        self.guild = FakeGuild(GUILD, "Ost", roles=[FakeRole(55, "police", 1, True)])
         self.alerts = channel(900, self.guild)
         self.config = conf(pvp_channel_id=900, pvp_role_id=55)
         self.relay = relay_of(self.config, Settings(self.config), [self.guild], [self.alerts])
@@ -163,6 +163,24 @@ class TwoServers(Base):
         asyncio.run(relay.handle(line(there)))
         self.assertEqual(alerts.sent, [], "le salon de la variable n'est pas à ce serveur")
         self.assertIn(("salon", "alertes-pvp"), there.created)
+
+    def test_le_role_de_la_variable_ne_deborde_pas_sur_un_autre_serveur(self):
+        here, there = FakeGuild(GUILD, "Ost", roles=[FakeRole(55, "police", 1, True)]), FakeGuild(OTHER, "Autre")
+        theirs = FakeRole(66, "pvp-police", 1, True)
+        there.roles.append(theirs)
+        alerts = channel(900, here)
+        config = conf(pvp_channel_id=900, pvp_role_id=55)
+        relay = relay_of(config, Settings(config), [here, there], [alerts])
+        asyncio.run(relay.handle(line(there)))
+        created = next(c for c in there.text_channels if c.name == "alertes-pvp")
+        self.assertEqual(created.sent[0].content, "<@&66>", "le rôle de l'autre serveur ferait une mention morte")
+
+    def test_le_role_de_la_variable_absent_d_ici_le_nom_est_cree_a_l_installation(self):
+        here, there = FakeGuild(GUILD, "Ost", roles=[FakeRole(55, "police", 1, True)]), FakeGuild(OTHER, "Autre")
+        alerts = channel(900, here)
+        config = conf(pvp_channel_id=900, pvp_role_id=55)
+        asyncio.run(relay_of(config, Settings(config), [here, there], [alerts]).handle(line(there)))
+        self.assertIn(("rôle", "pvp-police"), there.created)
 
     def test_au_demarrage_un_serveur_sans_reglage_ne_s_installe_pas_a_cote_de_la_variable(self):
         here, there = FakeGuild(GUILD, "Ost"), FakeGuild(OTHER, "Autre")

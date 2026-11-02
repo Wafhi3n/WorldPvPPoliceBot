@@ -25,6 +25,12 @@ class Load(unittest.TestCase):
         self.assertEqual((c.mode, c.delete_relayed), ("journal", True), "1er lancement : on regarde ; P3 : on efface")
         self.assertEqual(c.state_dir, cfg.ROOT / "state")
 
+    def test_la_liste_des_protecteurs(self):
+        self.assertIsNone(self.load(BASE).protectors_channel_id, "éteinte par défaut")
+        self.assertEqual(self.load({**BASE, "DISCORD_PVP_PROTECTORS_CHANNEL_ID": "900"}).protectors_channel_id, 900)
+        with self.assertRaises(SystemExit):
+            self.load({**BASE, "DISCORD_PVP_PROTECTORS_CHANNEL_ID": "#caserne"})
+
     def test_les_cartes_de_zone(self):
         c = self.load(BASE)
         self.assertEqual((c.maps, c.maps_product, c.maps_locale), (True, "wowf", "frFR"), "Forever, en français")

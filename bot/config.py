@@ -22,6 +22,7 @@ class Config:
     channel_id: int | None = None         # le salon relié imposé (absent : reconnu à ses messages du jeu, A2)
     pvp_channel_id: int | None = None     # #alertes-pvp imposé : UN serveur, comme le module d'origine
     pvp_role_id: int | None = None        # rôle imposé, mentionné à un NOUVEL appel
+    protectors_channel_id: int | None = None  # la liste des protecteurs connectés (absent : éteinte, sans ses intents)
     pvp_channel_name: str = "alertes-pvp"   # sinon : le salon des cartes, trouvé ou créé par ce nom (A1)
     pvp_role_name: str = "pvp-police"       # et le rôle, trouvé ou créé (mentionnable) par ce nom
     install: bool = True                  # BOT_INSTALLER : le droit de créer ce qui manque
@@ -37,7 +38,8 @@ class Config:
 
     def __repr__(self) -> str:      # jamais le jeton dans une trace
         return (f"Config(channel_id={self.channel_id}, pvp_channel_id={self.pvp_channel_id}, "
-                f"pvp_role_id={self.pvp_role_id}, pvp_channel_name={self.pvp_channel_name!r}, "
+                f"pvp_role_id={self.pvp_role_id}, protectors_channel_id={self.protectors_channel_id}, "
+                f"pvp_channel_name={self.pvp_channel_name!r}, "
                 f"pvp_role_name={self.pvp_role_name!r}, install={self.install}, delete_relayed={self.delete_relayed}, "
                 f"keep_hours={self.keep_hours}, language={self.language!r}, maps_locale={self.maps_locale!r}, "
                 f"mode={self.mode!r}, log_file={str(self.log_file)!r}, state_dir={str(self.state_dir)!r})")
@@ -91,6 +93,7 @@ def load(path: Path = ROOT / ".env") -> Config:
     return Config(token=token, channel_id=_optional_id(values, "DISCORD_CHANNEL_ID"),
                   pvp_channel_id=_optional_id(values, "DISCORD_PVP_CHANNEL_ID"),
                   pvp_role_id=_optional_id(values, "DISCORD_PVP_ROLE_ID"),
+                  protectors_channel_id=_optional_id(values, "DISCORD_PVP_PROTECTORS_CHANNEL_ID"),
                   pvp_channel_name=values.get("DISCORD_PVP_CHANNEL_NAME", "").strip() or "alertes-pvp",
                   pvp_role_name=values.get("DISCORD_PVP_ROLE_NAME", "").strip() or "pvp-police",
                   install=_choice(values, "BOT_INSTALLER", "oui", ("oui", "non")) == "oui",

@@ -1,13 +1,13 @@
 # Cartes « mercenaire » : appeler un tank ou un soigneur
 
-> État : **brouillon** · Idée du user le 2026-11-03. R1 à R4 tranchées par lui (dans la spec de l'addon) ;
-> B1 à B7 proposées par l'agent, **à confirmer**. Rien de codé. La ligne lue ici est définie par la spec de
+> État : **brouillon** · Idée du user le 2026-11-03. R1 à R4 tranchées par lui (dans la spec de l'addon),
+> puis B1 (salon à part) et les noms des rôles le même jour ; B2 à B7 proposées par l'agent, **à confirmer**. Rien de codé. La ligne lue ici est définie par la spec de
 > l'addon, qui fait foi : `F:\AddonDevellopement\WorldPvPPolice\docs\specs\mercenaires.md`.
 
 ## Le problème
 
 L'addon World PvP Police va savoir écrire dans le fil Discord de la guilde « je cherche un tank, ou un
-soigneur ». Ceux qui veulent être appelés portent un rôle `tank-mercenaire` ou `heal-mercenaire`, pris
+soigneur ». Ceux qui veulent être appelés portent un rôle `Tank Mercenaire` ou `Heal Mercenaire`, pris
 dans « Salons et rôles » comme `pvp-police`. Sans ce chantier, le bot ignore ces lignes : la ligne
 brute reste dans le salon relié et personne ne sonne.
 
@@ -16,10 +16,10 @@ brute reste dans le salon relié et personne ne sonne.
 1. **Une ligne `LFM` venue du jeu** devient une carte dans un salon dédié, `#mercenaires` par défaut.
    Le salon est trouvé ou créé par son nom, comme celui des alertes ; on peut aussi le régler avec
    `/setup salon-mercenaires` ou `DISCORD_MERC_CHANNEL_ID` (B1).
-2. **La carte mentionne les rôles demandés** : `TANK` donne `@tank-mercenaire`, `HEAL` donne
-   `@heal-mercenaire`, et les deux s'il le faut. On peut régler chaque rôle avec `/setup role-tank`,
+2. **La carte mentionne les rôles demandés** : `TANK` donne `@Tank Mercenaire`, `HEAL` donne
+   `@Heal Mercenaire`, et les deux s'il le faut. On peut régler chaque rôle avec `/setup role-tank`,
    `/setup role-heal`, ou par les variables `DISCORD_TANK_ROLE_ID` / `_NAME` et `DISCORD_HEAL_ROLE_ID`
-   / `_NAME` (B2).
+   / `_NAME` (B2). Noms cherchés par défaut : `Tank Mercenaire` et `Heal Mercenaire`, casse ignorée.
 3. **La carte dit** : qui cherche (« Gnomi Ombrelune cherche un tank »), où (la zone de la ligne), le
    message, comment répondre (« En jeu : /w Gnomi Ombrelune », forme exacte selon MR1 de l'addon) et
    l'heure (celle de Discord).
@@ -67,14 +67,14 @@ brute reste dans le salon relié et personne ne sonne.
 ## Décisions
 
 - **R1 à R4** (user, 2026-11-03) : voir la spec de l'addon. En bref : ici, dans World PvP Police ;
-  `tank-mercenaire` et `heal-mercenaire` ; le mercenaire chuchote.
-- **B1** (agent, à confirmer) : **un salon à part**, `#mercenaires`. Le user veut un salon par sorte
-  de sortie (P2 de `alertes-pvp.md`).
+  `Tank Mercenaire` et `Heal Mercenaire` ; le mercenaire chuchote.
+- **B1** (user, 2026-11-03) : **un salon à part**, `#mercenaires`, dans la ligne de P2 de
+  `alertes-pvp.md` (un salon par sorte de sortie).
 - **B2** (agent, à confirmer) : **un rôle par sorte d'appel**, avec ses réglages. Le `pvp_role`
   d'aujourd'hui ne change pas.
 - **B3** (agent, à confirmer) : un rôle de mercenaire n'est **jamais créé** par le bot, il est trouvé
   par son nom (casse ignorée) ou réglé. Le user les crée dans « Salons et rôles » (R2) ; un nom un
-  peu différent (« heal mercenaire » avec une espace) ferait sinon un doublon, et un bot public ne doit
+  peu différent (`heal-mercenaire` avec un tiret, au lieu de `Heal Mercenaire`) ferait sinon un doublon, et un bot public ne doit
   pas poser sur le serveur d'une autre guilde des rôles qu'elle n'a pas demandés. C'est un écart
   voulu avec `pvp-police`, qui reste créé comme avant.
 - **B4** (agent, à confirmer) : une mention seulement à la création de la carte (R7 de l'addon).
@@ -98,7 +98,7 @@ brute reste dans le salon relié et personne ne sonne.
 6. [test] Dans CraftingOrderBot, une ligne `LFM` est ignorée (même témoin que pour les SOS).
 7. [test] Le garde-fou du guide : les nouvelles commandes de `/setup` y figurent en FR et en EN.
 8. [human] Sur Discord : la carte arrive dans `#mercenaires` et le téléphone d'un porteur de
-   `tank-mercenaire` sonne. Témoin : une carte SOS du même jour. Observateur : le user.
+   `Tank Mercenaire` sonne. Témoin : une carte SOS du même jour. Observateur : le user.
 9. [human] `/setup role-tank` puis `/setup voir` : on voit le rôle et d'où il vient. Observateur : le user.
 
 ## Contrat

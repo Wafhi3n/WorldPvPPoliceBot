@@ -23,9 +23,10 @@ brute reste dans le salon relié et personne ne sonne.
 3. **La carte dit** : qui cherche (« Gnomi Ombrelune cherche un tank »), où (la zone de la ligne), le
    message, comment répondre (« En jeu : /w Gnomi Ombrelune », forme exacte selon MR1 de l'addon) et
    l'heure (celle de Discord).
-4. **Le même appel revient** (même `#LFM<n>` en moins de 30 minutes, mêmes rôles) : la carte est
-   modifiée, sans nouvelle mention. **`END … #LFM<n>`** : la carte passe en gris, « Trouvé ». **Rien
-   pendant 30 minutes** : elle passe en gris, « Expiré ». Une carte finie s'efface au bout de
+4. **Le même appel revient** (même `#LFM<n>` moins de 30 minutes après sa **dernière** ligne) : la
+   carte est modifiée, sans nouvelle mention. **`END … #LFM<n>`** : la carte passe en gris, « Trouvé ».
+   **30 minutes sans ligne** de cet appel : elle passe en gris, « Expiré ». L'addon compte avec la même
+   horloge. Une carte finie s'efface au bout de
    `BOT_GARDER_HEURES`, comme une carte d'appel PvP (P13).
 5. **La ligne brute est effacée** du salon relié une fois la carte faite (`BOT_SUPPRIMER=oui`). Elle
    reste si la carte n'a pas pu se faire.
@@ -43,8 +44,12 @@ brute reste dans le salon relié et personne ne sonne.
 
 ## Cas particuliers
 
-- **Un rôle absent** : il est créé mentionnable si le bot en a le droit, comme `pvp-police` (B3).
-  Sinon la carte part sans mention de ce rôle, et le journal comme `/setup voir` le disent.
+- **Un rôle absent** (aucun réglage, et aucun rôle de ce nom, casse ignorée) : il n'est **jamais
+  créé** (B3). La carte part sans mention de ce rôle, et le journal comme `/setup voir` le disent.
+- **Le même `#LFM<n>` avec d'autres rôles** (l'addon ne le fait pas, R8) : mise à jour ; la carte prend
+  les rôles de la ligne, et un rôle pas encore mentionné sonne une fois (B5 s'applique).
+- **Une mise à jour à la limite des 30 minutes** (envoyée à 29:59, reçue à 30:01) : elle devient un
+  nouvel appel et une 2e carte, sans mention grâce à B5 ; la 1re expire seule.
 - **Un rôle pas mentionnable** : la carte part, la mention ne sonne pas, et `/setup voir` donne le geste.
 - **Le salon des mercenaires absent**, sans droit de le créer : la ligne brute reste.
 - **Un même appelant qui rouvre un appel** (changement de rôles, R8 de l'addon) : un rôle déjà mentionné
@@ -67,11 +72,15 @@ brute reste dans le salon relié et personne ne sonne.
   de sortie (P2 de `alertes-pvp.md`).
 - **B2** (agent, à confirmer) : **un rôle par sorte d'appel**, avec ses réglages. Le `pvp_role`
   d'aujourd'hui ne change pas.
-- **B3** (agent, à confirmer) : un rôle absent est **créé mentionnable**, par le même code que
-  `pvp-police`, pour que la mention sonne. Le user l'ajoute ensuite à « Salons et rôles ».
+- **B3** (agent, à confirmer) : un rôle de mercenaire n'est **jamais créé** par le bot, il est trouvé
+  par son nom (casse ignorée) ou réglé. Le user les crée dans « Salons et rôles » (R2) ; un nom un
+  peu différent (« heal mercenaire » avec une espace) ferait sinon un doublon, et un bot public ne doit
+  pas poser sur le serveur d'une autre guilde des rôles qu'elle n'a pas demandés. C'est un écart
+  voulu avec `pvp-police`, qui reste créé comme avant.
 - **B4** (agent, à confirmer) : une mention seulement à la création de la carte (R7 de l'addon).
 - **B5** (agent, à confirmer) : 10 minutes entre deux mentions du même rôle pour le même appelant.
-- **B6** (agent, à confirmer) : 30 minutes de vie, comme un appel PvP.
+- **B6** (agent, à confirmer) : 30 minutes de vie après la dernière ligne, comme un appel PvP, et
+  comme l'addon le compte (R10).
 - **B7** (agent) : le guide FR/EN (`bot/guide/`) décrit les nouveaux réglages dans la même branche ;
   son garde-fou (les tests) l'exige déjà pour une commande.
 
@@ -82,7 +91,8 @@ brute reste dans le salon relié et personne ne sonne.
 2. [test] Une ligne `LFM` n'est jamais lue comme un SOS, un OMW ou un END d'appel PvP, et l'inverse
    non plus.
 3. [test] Nouvelle carte : la mention porte exactement les rôles demandés. Mise à jour : aucune
-   mention. `END` : carte grise. 30 minutes sans rien : carte grise « Expiré ».
+   mention, et l'horloge repart. `END` : carte grise. 30 minutes après la dernière ligne : carte grise
+   « Expiré ». Un rôle absent : aucune création, carte sans sa mention.
 4. [test] Un deuxième appel du même appelant pour le même rôle en moins de 10 minutes ne mentionne pas.
 5. [test] `allowed_mentions` ne laisse passer que les rôles réglés, même si le message contient `@everyone`.
 6. [test] Dans CraftingOrderBot, une ligne `LFM` est ignorée (même témoin que pour les SOS).
